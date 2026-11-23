@@ -1,0 +1,4326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>GODVERS — Buddhist-Fractal Cosmology &amp; The Final Box Map</title>
+
+  <style>
+    /* =====================================================================
+       DESIGN TOKENS — OBSIDIAN, ANTIQUE GOLD & COSMIC VIOLET GLASSMORPHISM
+       100% Self-Contained (Zero External CDN Dependencies)
+       ===================================================================== */
+    :root {
+      --bg-void: #030308;
+      --bg-obsidian: #070814;
+      --gold: #f5c542;
+      --gold-bright: #ffe699;
+      --gold-dim: rgba(245, 197, 66, 0.24);
+      --cyan: #38e8ff;
+      --cyan-dim: rgba(56, 232, 255, 0.20);
+      --violet: #a855f7;
+      --violet-dim: rgba(168, 85, 247, 0.22);
+      --crimson: #ff3b5c;
+      --text-main: #edf2fb;
+      --text-muted: #9aa7bd;
+      --glass-panel: linear-gradient(155deg, rgba(11, 12, 26, 0.82) 0%, rgba(5, 5, 14, 0.90) 100%);
+      --glass-pill: rgba(8, 9, 22, 0.78);
+      --border-subtle: rgba(255, 255, 255, 0.11);
+      --border-gold: rgba(245, 197, 66, 0.42);
+      --font-display: "Cinzel", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --r-sm: 10px;
+      --r-md: 14px;
+      --r-lg: 18px;
+      --r-pill: 999px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-void);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* =====================================================================
+       BORDERLESS FULL-VIEWPORT DUAL-CANVAS ARCHITECTURE
+       ===================================================================== */
+    #webglCanvas,
+    #overlayCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      touch-action: none;
+    }
+    #webglCanvas { z-index: 1; }
+    #overlayCanvas { z-index: 2; cursor: crosshair; }
+    #overlayCanvas.panning { cursor: grabbing; }
+    #overlayCanvas.box-rotate { cursor: grab; }
+    #overlayCanvas.box-rotate.panning { cursor: grabbing; }
+
+    /* =====================================================================
+       GLASSMORPHIC SURFACES & CUSTOM SCROLLBARS
+       ===================================================================== */
+    .glass-panel {
+      background: var(--glass-panel);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(245, 197, 66, 0.18);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.76), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      border-radius: var(--r-lg);
+    }
+
+    .glass-pill {
+      background: var(--glass-pill);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.58);
+    }
+
+    .cosmic-scroll {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(245, 197, 66, 0.34) transparent;
+    }
+    .cosmic-scroll::-webkit-scrollbar { width: 5px; height: 4px; }
+    .cosmic-scroll::-webkit-scrollbar-track { background: transparent; }
+    .cosmic-scroll::-webkit-scrollbar-thumb {
+      background: rgba(245, 197, 66, 0.34);
+      border-radius: 99px;
+    }
+    .cosmic-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(245, 197, 66, 0.60);
+    }
+
+    /* =====================================================================
+       ZEN MODE — COMPLETE BORDERLESS VISUAL IMMERSION
+       ===================================================================== */
+    .ui-chrome {
+      transition: opacity 0.36s ease, transform 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    body.zen-mode .ui-chrome {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transform: scale(0.985);
+    }
+
+    #exitZenBtn {
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      z-index: 60;
+      padding: 9px 15px;
+      border-radius: var(--r-pill);
+      border: 1px solid var(--border-gold);
+      color: var(--gold-bright);
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+      transition: opacity 0.32s ease, transform 0.28s ease, border-color 0.2s ease;
+    }
+    body.zen-mode #exitZenBtn {
+      opacity: 0.24;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+    body.zen-mode #exitZenBtn:hover,
+    body.zen-mode #exitZenBtn.zen-awake {
+      opacity: 0.96;
+      border-color: var(--gold);
+    }
+
+    /* =====================================================================
+       TOP NAVIGATION & LIVE TELEMETRY HUD
+       ===================================================================== */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 30;
+      padding: 10px 14px 0;
+      pointer-events: none;
+    }
+    .top-bar-inner {
+      max-width: 1780px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .brand-pill {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 6px 13px 6px 7px;
+      border-radius: var(--r-md);
+    }
+    .brand-sigil {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(245, 197, 66, 0.28), rgba(168, 85, 247, 0.24), rgba(56, 232, 255, 0.16));
+      border: 1px solid rgba(245, 197, 66, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      color: var(--gold);
+      font-weight: 700;
+      font-size: 13.5px;
+      box-shadow: 0 0 16px rgba(245, 197, 66, 0.22);
+      flex-shrink: 0;
+    }
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      background: linear-gradient(90deg, #fff5cc, var(--gold), #d8b4fe);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin: 0;
+      line-height: 1.15;
+    }
+    .brand-sub {
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 1px 0 0;
+    }
+
+    .telemetry-pill {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 14px;
+      border-radius: var(--r-md);
+      font-size: 11px;
+    }
+    .tele-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .tele-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+    }
+    .tele-val {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      font-size: 11px;
+    }
+    .tele-sep {
+      width: 1px;
+      height: 13px;
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+      animation: softPulse 2s ease-in-out infinite;
+    }
+    @keyframes softPulse {
+      0%, 100% { opacity: 0.65; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.25); }
+    }
+
+    .top-actions {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .btn-glass {
+      background: var(--glass-pill);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      border-radius: var(--r-sm);
+      padding: 7px 11px;
+      min-height: 34px;
+      font-size: 11.5px;
+      font-weight: 500;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .btn-glass:hover {
+      border-color: var(--border-gold);
+      color: #fff;
+      background: rgba(245, 197, 66, 0.11);
+    }
+    .btn-glass.active-cyan {
+      border-color: rgba(56, 232, 255, 0.64);
+      background: linear-gradient(135deg, rgba(56, 232, 255, 0.22), rgba(168, 85, 247, 0.18));
+      color: #e0faff;
+      box-shadow: 0 0 16px rgba(56, 232, 255, 0.22);
+    }
+    .btn-glass.active-gold {
+      border-color: rgba(245, 197, 66, 0.72);
+      background: linear-gradient(135deg, rgba(245, 197, 66, 0.26), rgba(168, 85, 247, 0.18));
+      color: #fff8db;
+      box-shadow: 0 0 18px rgba(245, 197, 66, 0.26);
+    }
+    .btn-glass.active-violet {
+      border-color: rgba(168, 85, 247, 0.70);
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.26), rgba(245, 197, 66, 0.14));
+      color: #f3e8ff;
+      box-shadow: 0 0 16px rgba(168, 85, 247, 0.24);
+    }
+
+    .icon-svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    /* =====================================================================
+       LIVE ORBIT TRACER HUD
+       ===================================================================== */
+    #orbitHud {
+      position: fixed;
+      top: 58px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 26;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.22s ease;
+      max-width: 94vw;
+    }
+    .orbit-hud-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: var(--r-pill);
+      font-size: 11px;
+    }
+
+    /* =====================================================================
+       STANDALONE "THE FINAL BOX" FLOATING CONTROL BAR
+       ===================================================================== */
+    #finalBoxBar {
+      position: fixed;
+      top: 62px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 28;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 7px 12px;
+      max-width: calc(100vw - 24px);
+      border: 1px solid rgba(245, 197, 66, 0.48);
+      box-shadow: 0 12px 38px rgba(0, 0, 0, 0.8), 0 0 24px rgba(245, 197, 66, 0.14);
+      pointer-events: auto;
+    }
+    #finalBoxBar.visible {
+      display: flex;
+    }
+    .fb-badge {
+      font-family: var(--font-display);
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      color: var(--gold);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding-right: 4px;
+    }
+
+    /* =====================================================================
+       FLOATING 4D HOLOGRAPHIC CONTROLS (VISIBLE ONLY ON PATTERN #3)
+       ===================================================================== */
+    #controls4D {
+      position: fixed;
+      top: 66px;
+      right: 16px;
+      z-index: 26;
+      width: 244px;
+      padding: 12px 14px;
+      display: none;
+      flex-direction: column;
+      gap: 9px;
+      pointer-events: auto;
+    }
+    #controls4D.visible {
+      display: flex;
+    }
+    .ctrl-4d-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .ctrl-4d-title {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: var(--cyan);
+      text-transform: uppercase;
+    }
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .slider-row-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10.5px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+    .slider-row-label strong {
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    /* =====================================================================
+       MOBILE BACKDROP DIMMER FOR OVERLAY DRAWERS
+       ===================================================================== */
+    #drawerBackdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 34;
+      background: rgba(2, 2, 8, 0.62);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    #drawerBackdrop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* =====================================================================
+       LEFT COSMOLOGY SIDEBAR & RIGHT LORE INSPECTOR DRAWER
+       ===================================================================== */
+    #layersSidebar {
+      position: fixed;
+      left: 14px;
+      top: 64px;
+      bottom: 138px;
+      width: 318px;
+      z-index: 36;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      pointer-events: none;
+      transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease;
+      transform: translateX(-118%);
+      opacity: 0;
+    }
+    #layersSidebar.open {
+      transform: translateX(0);
+      opacity: 1;
+    }
+
+    #inspectorDrawer {
+      position: fixed;
+      right: 14px;
+      top: 64px;
+      bottom: 138px;
+      width: min(392px, calc(100vw - 28px));
+      z-index: 37;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      pointer-events: none;
+      transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease;
+      transform: translateX(118%);
+      opacity: 0;
+    }
+    #inspectorDrawer.open {
+      transform: translateX(0);
+      opacity: 1;
+    }
+
+    .drawer-card {
+      pointer-events: auto;
+      padding: 14px;
+      max-height: 100%;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .drawer-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .drawer-close {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-muted);
+      border-radius: 9px;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .drawer-close:hover { color: #fff; background: rgba(255, 255, 255, 0.14); }
+
+    /* Hierarchy Spine & Cards */
+    .hierarchy-wrap {
+      position: relative;
+      padding-left: 14px;
+    }
+    .hierarchy-spine {
+      position: absolute;
+      left: 5px;
+      top: 14px;
+      bottom: 14px;
+      width: 2px;
+      border-radius: 99px;
+      background: linear-gradient(180deg, #fff3c4 0%, var(--cyan) 22%, var(--gold) 46%, var(--violet) 68%, #e879f9 84%, var(--crimson) 100%);
+      opacity: 0.72;
+    }
+    .layer-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      position: relative;
+      z-index: 1;
+    }
+    .layer-node {
+      width: 100%;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.028);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 12px;
+      padding: 9px 10px;
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      transition: all 0.22s ease;
+    }
+    .layer-node:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(245, 197, 66, 0.36);
+      transform: translateX(2px);
+    }
+    .layer-node.active {
+      background: linear-gradient(95deg, rgba(245, 197, 66, 0.16), rgba(56, 232, 255, 0.09));
+      border-color: rgba(245, 197, 66, 0.65);
+      box-shadow: 0 0 20px rgba(245, 197, 66, 0.14);
+    }
+    .layer-sigil {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 12.5px;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .layer-rank {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      letter-spacing: 0.14em;
+      color: var(--gold);
+      opacity: 0.9;
+    }
+    .layer-subtitle {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      line-height: 1.32;
+      margin-top: 2px;
+    }
+
+    /* Standalone Highlighted Section for THE FINAL BOX (03) */
+    .final-box-section {
+      margin: 4px 0;
+      padding: 9px;
+      border-radius: 14px;
+      background: linear-gradient(150deg, rgba(245, 197, 66, 0.14) 0%, rgba(168, 85, 247, 0.10) 52%, rgba(8, 8, 22, 0.88) 100%);
+      border: 1.5px solid rgba(245, 197, 66, 0.56);
+      box-shadow: 0 0 26px rgba(245, 197, 66, 0.14), inset 0 0 18px rgba(245, 197, 66, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      position: relative;
+    }
+    .final-box-section-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-bright);
+      padding: 0 2px;
+    }
+    .final-box-section .layer-node {
+      background: rgba(6, 7, 18, 0.72);
+      border-color: rgba(245, 197, 66, 0.34);
+    }
+    .final-box-section .layer-node.active {
+      background: linear-gradient(95deg, rgba(245, 197, 66, 0.22), rgba(168, 85, 247, 0.16));
+      border-color: var(--gold);
+    }
+    .inspect-fb-btn {
+      width: 100%;
+      padding: 7px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(245, 197, 66, 0.65);
+      background: linear-gradient(90deg, rgba(245, 197, 66, 0.24), rgba(168, 85, 247, 0.22));
+      color: #fff7d6;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .inspect-fb-btn:hover {
+      background: linear-gradient(90deg, rgba(245, 197, 66, 0.36), rgba(168, 85, 247, 0.32));
+      box-shadow: 0 0 18px rgba(245, 197, 66, 0.28);
+      transform: translateY(-1px);
+    }
+
+    .section-divider-label {
+      font-family: var(--font-mono);
+      font-size: 8.5px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(154, 167, 189, 0.75);
+      padding: 4px 2px 1px;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.09);
+      font-size: 10.5px;
+      color: var(--text-muted);
+    }
+
+    /* =====================================================================
+       BOTTOM FLOATING DUAL DOCK (9 PATTERNS + INFINITE ZOOM PILL)
+       ===================================================================== */
+    .bottom-dock {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 28;
+      width: min(1220px, calc(100vw - 16px));
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      pointer-events: none;
+    }
+
+    .dock-row {
+      pointer-events: auto;
+      padding: 7px 10px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .pattern-strip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      flex: 1;
+      padding-bottom: 2px;
+    }
+    .pattern-pill {
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 11px;
+      padding: 5px 10px;
+      color: #cbd5e1;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1px;
+      transition: all 0.2s ease;
+      text-align: left;
+    }
+    .pattern-pill:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(245, 197, 66, 0.44);
+      color: #fff;
+    }
+    .pattern-pill.active {
+      background: linear-gradient(135deg, rgba(245, 197, 66, 0.24), rgba(168, 85, 247, 0.18));
+      border-color: rgba(245, 197, 66, 0.74);
+      color: #fffbeb;
+      box-shadow: 0 0 18px rgba(245, 197, 66, 0.2);
+    }
+    .pattern-pill-name {
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    .pattern-pill-meta {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: rgba(154, 167, 189, 0.92);
+      white-space: nowrap;
+    }
+    .pattern-pill.active .pattern-pill-meta {
+      color: #fde68a;
+    }
+
+    .zoom-row {
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+    .portal-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      overflow-x: auto;
+      max-width: 100%;
+    }
+    .portal-btn {
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      color: #cbd5e1;
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .portal-btn:hover { color: #fff; border-color: rgba(245, 197, 66, 0.48); }
+    .portal-btn.active {
+      background: linear-gradient(135deg, rgba(56, 232, 255, 0.22), rgba(168, 85, 247, 0.26));
+      border-color: rgba(56, 232, 255, 0.70);
+      color: #e0faff;
+      box-shadow: 0 0 14px rgba(56, 232, 255, 0.22);
+    }
+    .portal-btn[data-portal="finalbox"].active {
+      background: linear-gradient(135deg, rgba(245, 197, 66, 0.28), rgba(168, 85, 247, 0.26));
+      border-color: rgba(245, 197, 66, 0.80);
+      color: #fff7d6;
+      box-shadow: 0 0 16px rgba(245, 197, 66, 0.26);
+    }
+
+    .control-cluster {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .speed-box {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(0, 0, 0, 0.36);
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      border-radius: 10px;
+      padding: 5px 9px;
+    }
+
+    select.palette-select {
+      background: rgba(8, 9, 22, 0.92);
+      border: 1px solid rgba(245, 197, 66, 0.36);
+      color: #fde68a;
+      border-radius: 10px;
+      padding: 6px 8px;
+      font-size: 11px;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      outline: none;
+      cursor: pointer;
+    }
+    select.palette-select:hover { border-color: var(--gold); }
+
+    input[type="range"].cosmic-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, rgba(56, 232, 255, 0.45), rgba(245, 197, 66, 0.72));
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"].cosmic-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--gold);
+      border: 2px solid var(--bg-void);
+      box-shadow: 0 0 10px rgba(245, 197, 66, 0.85);
+    }
+    input[type="range"].cosmic-slider::-moz-range-thumb {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--gold);
+      border: 2px solid var(--bg-void);
+      box-shadow: 0 0 10px rgba(245, 197, 66, 0.85);
+    }
+
+    /* Toast Message Box */
+    #toastBox {
+      position: fixed;
+      top: 108px;
+      left: 50%;
+      transform: translate(-50%, -8px);
+      z-index: 55;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    #toastBox.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+    .toast-inner {
+      padding: 7px 16px;
+      border-radius: var(--r-pill);
+      border: 1px solid var(--border-gold);
+      color: var(--gold-bright);
+      font-size: 11.5px;
+      font-weight: 500;
+      white-space: nowrap;
+      max-width: 92vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* =====================================================================
+       RESPONSIVE BREAKPOINTS (MOBILE PORTRAIT & TABLET)
+       ===================================================================== */
+    .hide-sm { display: inline; }
+    .hide-md { display: flex; }
+    .show-md-only { display: none; }
+
+    @media (max-width: 1060px) {
+      .hide-md { display: none; }
+      .show-md-only { display: flex; }
+      #controls4D {
+        top: auto;
+        bottom: 162px;
+        right: 10px;
+        width: 226px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .hide-sm { display: none; }
+      .top-bar { padding: 8px 8px 0; }
+      .brand-pill { padding: 5px 10px 5px 6px; }
+      .btn-glass { padding: 6px 9px; font-size: 11px; min-height: 34px; }
+      .bottom-dock { bottom: 7px; width: calc(100vw - 12px); gap: 5px; }
+      .dock-row { padding: 6px 8px; gap: 5px; }
+      .pattern-pill { padding: 4px 8px; }
+
+      /* Clean centered/bottom glassmorphic overlay sheets on mobile portrait */
+      #layersSidebar,
+      #inspectorDrawer {
+        left: 50%;
+        right: auto;
+        top: auto;
+        bottom: 14px;
+        width: calc(100vw - 20px);
+        max-width: 440px;
+        max-height: 76vh;
+        transform: translate(-50%, 115%);
+      }
+      #layersSidebar.open,
+      #inspectorDrawer.open {
+        transform: translate(-50%, 0);
+      }
+
+      #finalBoxBar {
+        top: 56px;
+        padding: 6px 9px;
+        gap: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Borderless Dual-Layer Canvas Stack -->
+  <canvas id="webglCanvas" aria-hidden="true"></canvas>
+  <canvas id="overlayCanvas" aria-label="GODVERS Buddhist-Fractal Cosmology and The Final Box Interactive Map"></canvas>
+
+  <!-- Mobile Backdrop Dimmer for Clean Overlay Panels -->
+  <div id="drawerBackdrop" aria-hidden="true"></div>
+
+  <!-- =======================================================================
+       TOP NAVIGATION BAR & TELEMETRY HUD
+       ======================================================================= -->
+  <header class="ui-chrome top-bar">
+    <div class="top-bar-inner">
+
+      <!-- Left Emblem -->
+      <div class="glass-pill brand-pill">
+        <div class="brand-sigil">Ω⟁</div>
+        <div>
+          <h1 class="brand-title">GODVERS</h1>
+          <p class="brand-sub">Buddhist-Fractal &amp; Final Box Map</p>
+        </div>
+      </div>
+
+      <!-- Desktop Live Status Pill -->
+      <div class="glass-pill telemetry-pill hide-md">
+        <div class="tele-item">
+          <span id="teleDot" class="pulse-dot"></span>
+          <span class="tele-label">Mag</span>
+          <span id="magReadout" class="tele-val" style="color: var(--cyan); min-width: 66px;">1.00×</span>
+        </div>
+        <span class="tele-sep"></span>
+        <div class="tele-item">
+          <span class="tele-label">Samples</span>
+          <span id="sampleReadout" class="tele-val" style="color: var(--gold); min-width: 48px;">0.00M</span>
+        </div>
+        <span class="tele-sep"></span>
+        <div class="tele-item">
+          <span class="tele-label">Mode</span>
+          <span id="modeReadout" class="tele-val" style="color: #e9d5ff;">Final Box Dive</span>
+        </div>
+      </div>
+
+      <!-- Right Quick Action Buttons -->
+      <div class="top-actions">
+        <!-- Compact Mobile Telemetry -->
+        <div class="glass-pill show-md-only" style="padding: 6px 9px; border-radius: 10px; gap: 6px; align-items: center; font-family: var(--font-mono); font-size: 10px;">
+          <span class="pulse-dot" style="width:6px;height:6px;"></span>
+          <span id="magReadoutMobile" style="color: var(--cyan); font-weight: 600;">1.00×</span>
+          <span style="opacity:0.25;">·</span>
+          <span id="sampleReadoutMobile" style="color: var(--gold);">0.0M</span>
+        </div>
+
+        <button id="toggleLayersBtn" class="btn-glass" title="Open GODVERS Cosmology Hierarchy">
+          <svg class="icon-svg" style="color: var(--gold);" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l9 4.5-9 4.5-9-4.5L12 3zm0 9l9 4.5-9 4.5-9-4.5L12 12z"/></svg>
+          <span class="hide-sm">Layers</span>
+        </button>
+
+        <button id="finalBoxModeBtn" class="btn-glass active-gold" title="Dedicated Standalone View of THE FINAL BOX (Press F)">
+          <span style="color: var(--gold); font-size: 13px; line-height: 1;">▣</span>
+          <span>Final Box</span>
+        </button>
+
+        <button id="toggleLoreBtn" class="btn-glass" title="Open Cosmology Lore Drawer">
+          <svg class="icon-svg" style="color: var(--violet);" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.25v13m0-13C10.8 5.5 9.2 5 7.5 5S4.2 5.5 3 6.25v13C4.2 18.5 5.8 18 7.5 18s3.3.5 4.5 1.25m0-13C13.2 5.5 14.8 5 16.5 5s3.3.5 4.5 1.25v13C19.8 18.5 18.2 18 16.5 18s-3.3.5-4.5 1.25"/></svg>
+          <span class="hide-sm">Lore</span>
+        </button>
+
+        <button id="orbitToggleBtn" class="btn-glass active-cyan" title="Toggle Formula-Aware Orbit Tracer">
+          <span id="orbitLed" style="width:7px;height:7px;border-radius:50%;background:var(--cyan);"></span>
+          <span class="hide-sm">Orbit</span>
+        </button>
+
+        <button id="savePngBtn" class="btn-glass" title="Save Clean Borderless PNG (No Watermarks or Labels)">
+          <svg class="icon-svg" style="color: var(--gold);" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+          <span class="hide-sm">PNG</span>
+        </button>
+
+        <button id="zenBtn" class="btn-glass" title="Zen Mode — Hide All HUD &amp; Labels (Press Z)">
+          <svg class="icon-svg" style="color: var(--cyan);" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.46 12C3.73 7.94 7.52 5 12 5s8.27 2.94 9.54 7c-1.27 4.06-5.06 7-9.54 7s-8.27-2.94-9.54-7z"/></svg>
+          <span class="hide-sm">Zen</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- =======================================================================
+       STANDALONE "THE FINAL BOX" INTERACTIVE CONTROL PILL
+       ======================================================================= -->
+  <div id="finalBoxBar" class="ui-chrome glass-panel" role="region" aria-label="The Final Box Standalone Visualizer Controls">
+    <div class="fb-badge">
+      <span>▣</span>
+      <span>THE FINAL BOX · 4D Containment View</span>
+    </div>
+    <span style="font-size:10.5px;color:var(--text-muted);" class="hide-sm">Drag to rotate 4D Prism</span>
+    <button id="fbLabelsToggleBtn" class="btn-glass active-gold" style="padding:5px 10px;min-height:28px;font-size:10.5px;">
+      Labels: ON
+    </button>
+    <button id="fbAutoSpinBtn" class="btn-glass active-cyan" style="padding:5px 10px;min-height:28px;font-size:10.5px;">
+      4D Spin: ON
+    </button>
+    <button id="fbDiveInsideBtn" class="btn-glass active-violet" style="padding:5px 10px;min-height:28px;font-size:10.5px;">
+      Dive Inside ↘
+    </button>
+    <button id="exitFinalBoxBtn" class="btn-glass" style="padding:5px 10px;min-height:28px;font-size:10.5px;">
+      Return to Fractal Map
+    </button>
+  </div>
+
+  <!-- =======================================================================
+       INTERACTIVE ORBIT TRACER HUD
+       ======================================================================= -->
+  <div id="orbitHud" class="ui-chrome">
+    <div class="glass-pill orbit-hud-inner">
+      <span id="orbitDot" style="width:8px;height:8px;border-radius:50%;background:var(--cyan);"></span>
+      <span id="orbitStatus" style="font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--cyan);">Nirvāṇa — Escaped to Infinity</span>
+      <span style="opacity:0.25;">|</span>
+      <span id="orbitCoord" style="font-family:var(--font-mono);color:#e2e8f0;">c = 0.000 + 0.000i</span>
+      <span style="opacity:0.25;">|</span>
+      <span id="orbitIter" style="font-family:var(--font-mono);color:var(--gold);">n = 24</span>
+      <span id="orbitPinHint" class="hide-sm" style="color:var(--text-muted);font-size:10px;">(Click to pin)</span>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       4D HOLOGRAPHIC BUDDHABROT ANGLE CONTROLS (ONLY SHOWN FOR PATTERN #3)
+       ======================================================================= -->
+  <section id="controls4D" class="ui-chrome glass-panel" aria-label="4D Holographic Projection Controls">
+    <div class="ctrl-4d-head">
+      <span class="ctrl-4d-title">4D Holographic Plane</span>
+      <button id="autoMorph4DBtn" class="btn-glass active-cyan" style="padding:4px 8px;min-height:26px;font-size:10px;">
+        Auto-Morph: ON
+      </button>
+    </div>
+    <div class="slider-row">
+      <div class="slider-row-label">
+        <span>θ_xz (zr ↔ cr)</span>
+        <strong id="angleXZVal">32°</strong>
+      </div>
+      <input id="angleXZSlider" type="range" min="0" max="360" step="1" value="32" class="cosmic-slider" />
+    </div>
+    <div class="slider-row">
+      <div class="slider-row-label">
+        <span>θ_yw (zi ↔ ci)</span>
+        <strong id="angleYWVal">24°</strong>
+      </div>
+      <input id="angleYWSlider" type="range" min="0" max="360" step="1" value="24" class="cosmic-slider" />
+    </div>
+    <div style="font-size:10px;color:var(--text-muted);line-height:1.35;">
+      Rotates <span style="font-family:var(--font-mono);color:#cbd5e1;">(cr, ci, zr, zi)</span> across cosmic wings, shrines, pillars &amp; mandala domes.
+    </div>
+  </section>
+
+  <!-- =======================================================================
+       LEFT COSMOLOGY SIDEBAR (6 PLANES WITH STANDALONE "THE FINAL BOX")
+       ======================================================================= -->
+  <aside id="layersSidebar" class="ui-chrome" aria-label="GODVERS Cosmology — Buddhist-Fractal Architecture">
+    <div class="glass-panel drawer-card cosmic-scroll">
+      <div class="drawer-header">
+        <div>
+          <h2 style="margin:0;font-family:var(--font-display);font-size:12px;letter-spacing:0.18em;color:var(--gold);text-transform:uppercase;">
+            GODVERS COSMOLOGY
+          </h2>
+          <p style="margin:2px 0 0;font-size:10px;color:var(--text-muted);">
+            Buddhist-Fractal Architecture
+          </p>
+        </div>
+        <button id="closeLayersBtn" class="drawer-close" title="Close Cosmology Panel">✕</button>
+      </div>
+
+      <div class="hierarchy-wrap">
+        <div class="hierarchy-spine"></div>
+        <div id="layerList" class="layer-list"></div>
+      </div>
+
+      <div class="toggle-row">
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;">
+          <input id="autoSyncLayerCheck" type="checkbox" checked style="accent-color: var(--gold); cursor:pointer;" />
+          <span>Sync visual realm on click</span>
+        </label>
+      </div>
+    </div>
+  </aside>
+
+  <!-- =======================================================================
+       RIGHT LORE & PHILOSOPHY INSPECTOR DRAWER
+       ======================================================================= -->
+  <aside id="inspectorDrawer" class="ui-chrome" aria-label="Cosmology Lore Inspector">
+    <div class="glass-panel drawer-card cosmic-scroll">
+      <div class="drawer-header">
+        <div>
+          <span id="inspLayerNum" style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.16em;padding:2px 9px;border-radius:99px;background:rgba(245,197,66,0.14);color:var(--gold);border:1px solid rgba(245,197,66,0.38);">03 · THE FINAL BOX</span>
+          <h2 id="inspTitle" style="margin:8px 0 2px;font-family:var(--font-display);font-size:16px;line-height:1.3;color:#fff;"></h2>
+          <p id="inspSubtitle" style="margin:0;font-size:11.5px;color:#fde68a;opacity:0.86;"></p>
+        </div>
+        <button id="closeLoreBtn" class="drawer-close" title="Close Lore Panel">✕</button>
+      </div>
+
+      <div>
+        <div style="font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;">Core Principles</div>
+        <div id="inspPhilosophy" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+      </div>
+
+      <div style="background:rgba(0,0,0,0.44);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:8px;">
+          <span style="font-size:9.5px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);">Metaphysical Signature</span>
+          <span id="inspMathSym" style="font-family:var(--font-mono);font-size:11px;color:var(--gold);font-weight:600;"></span>
+        </div>
+        <p id="inspMathDesc" style="margin:0;font-family:var(--font-mono);font-size:11px;line-height:1.5;color:#cbd5e1;"></p>
+      </div>
+
+      <div>
+        <div style="font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px;">Cosmological Lore</div>
+        <p id="inspLore" style="margin:0;font-size:12.5px;line-height:1.62;color:#e2e8f0;"></p>
+      </div>
+
+      <div id="inspDetails" style="display:flex;flex-direction:column;gap:6px;"></div>
+
+      <!-- Dedicated Action Button for Inspecting The Final Box Separately (Shown on Plane 03) -->
+      <button id="inspFinalBoxSeparateBtn" class="inspect-fb-btn" style="display:none;padding:9px 12px;font-size:12px;">
+        <span>▣</span>
+        <span>Inspect Final Box Separately</span>
+      </button>
+
+      <button id="engageLayerSignatureBtn" class="btn-glass active-gold" style="justify-content:center;padding:8px 12px;width:100%;font-weight:600;">
+        Engage Signature Realm &amp; Portal
+      </button>
+
+      <div style="padding-top:8px;border-top:1px solid rgba(255,255,255,0.09);text-align:center;">
+        <p id="inspQuote" style="margin:0;font-family:var(--font-display);font-style:italic;font-size:11.5px;line-height:1.5;color:#fde68a;opacity:0.88;"></p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- =======================================================================
+       BOTTOM FLOATING DUAL DOCK (9 PATTERNS + INFINITE ZOOM CONTROLS)
+       ======================================================================= -->
+  <footer class="ui-chrome bottom-dock">
+
+    <!-- Row 1: 9-Pattern Buddhabrot Quick Selector -->
+    <div class="glass-panel dock-row">
+      <div id="patternStrip" class="pattern-strip cosmic-scroll" role="tablist" aria-label="9 Mathematical Buddhabrot Patterns"></div>
+    </div>
+
+    <!-- Row 2: Infinite Loop Zoom, 5 Portals, Palettes & Final Box Border Overlay -->
+    <div class="glass-panel dock-row zoom-row">
+
+      <div class="control-cluster">
+        <button id="zoomToggleBtn" class="btn-glass active-cyan" title="Play / Pause Infinite Loop Zoom (Space)">
+          <span id="zoomToggleIcon">❚❚</span>
+          <span id="zoomToggleLabel" class="hide-sm">Infinite Zoom</span>
+        </button>
+
+        <button id="dirToggleBtn" class="btn-glass" title="Toggle Zoom In / Zoom Out">
+          <span id="dirIcon" style="color: var(--gold); font-weight:700;">↓</span>
+          <span id="dirLabel" class="hide-sm">In</span>
+        </button>
+      </div>
+
+      <!-- 5 Seamless Infinite Loop Zoom Portals -->
+      <div id="portalGroup" class="portal-group cosmic-scroll">
+        <button data-portal="finalbox" class="portal-btn active">▣ Final Box Dive</button>
+        <button data-portal="dive" class="portal-btn">Buddhabrot Dive</button>
+        <button data-portal="indrajala" class="portal-btn">Indrajāla WebGL</button>
+        <button data-portal="maya" class="portal-btn">Māyā Vortex</button>
+        <button data-portal="axis" class="portal-btn">Crown &amp; Lotus Axis</button>
+      </div>
+
+      <div class="control-cluster">
+        <div class="speed-box">
+          <span style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);">Spd</span>
+          <input id="speedSlider" type="range" min="0.2" max="3.0" step="0.1" value="1.0" class="cosmic-slider" style="width: 60px;" aria-label="Zoom Speed" />
+          <span id="speedVal" style="font-family:var(--font-mono);font-size:10.5px;color:var(--gold);min-width:26px;text-align:right;">1.0×</span>
+        </div>
+
+        <select id="paletteSelect" class="palette-select" aria-label="Cosmic Color Palette" title="Cosmic Color Palette">
+          <option value="nebulabrot">Nebulabrot RGB</option>
+          <option value="golden_nirvana">Golden Nirvana</option>
+          <option value="obsidian_violet">Obsidian Violet</option>
+          <option value="solar_dharma">Solar Dharma</option>
+          <option value="void_cyan">Void Cyan</option>
+        </select>
+
+        <button id="frameOverlayBtn" class="btn-glass" title="Keep a Glowing Final Box Boundary Frame Around Any Pattern">
+          <span style="color: var(--gold);">▣</span>
+          <span class="hide-sm">Frame</span>
+        </button>
+
+        <button id="turboBtn" class="btn-glass active-gold" title="Turbo Boost — Rapid Extra Monte Carlo Trajectory Batches">
+          <span>⚡</span>
+          <span class="hide-sm">Turbo</span>
+        </button>
+
+        <button id="resetBtn" class="btn-glass" title="Reset Camera, Rotation &amp; Zoom Cycle">
+          <span>↺</span>
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Exit Zen Mode Pill -->
+  <button id="exitZenBtn" class="glass-pill">
+    <svg class="icon-svg" style="color: var(--cyan);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.46 12C3.73 7.94 7.52 5 12 5s8.27 2.94 9.54 7c-1.27 4.06-5.06 7-9.54 7s-8.27-2.94-9.54-7z"/></svg>
+    <span>Exit Zen (Z)</span>
+  </button>
+
+  <!-- Toast Message Box -->
+  <div id="toastBox">
+    <div class="glass-pill toast-inner" id="toastMsg">GODVERS Initialized</div>
+  </div>
+
+  <!-- =======================================================================
+       CORE ENGINE:
+       - 4D Rotating Tesseract / The Final Box Standalone Visualizer
+       - 9 Mathematical Buddhabrot Patterns (Progressive Float32Array Monte Carlo)
+       - Adaptive Multi-Formula WebGL Shader (with Canvas2D Fallback)
+       - 5 Seamless Infinite Loop Zoom Portals & Formula-Aware Orbit Tracer
+       ======================================================================= -->
+  <script>
+    (() => {
+      'use strict';
+
+      /* =====================================================================
+         1. NINE MATHEMATICAL BUDDHABROT PATTERNS
+         ===================================================================== */
+      const PATTERNS = [
+        {
+          id: 'classic',
+          name: 'Classic Nebulabrot',
+          formula: 'z² + c',
+          realm: '02 · BUDDHABROT',
+          shaderFormula: 0,
+          reMin: -2.05, reMax: 1.05,
+          imMin: -1.55, imMax: 1.55,
+          minIter: 4, maxIter: 1800,
+          defaultCenter: { re: -0.50, im: 0.0 },
+          indrajalaTarget: { re: -1.76342, im: 0.0 },
+          indrajalaRatio: 58.0,
+          indrajalaBase: 1.0,
+          mayaTarget: { re: -0.743643887, im: 0.131825904 },
+          axisAnchorY: -0.26
+        },
+        {
+          id: 'dharmakaya',
+          name: 'Dharmakāya Crown',
+          formula: 'z² + c (Deep)',
+          realm: '01 · Apex Crown',
+          shaderFormula: 0,
+          reMin: -2.05, reMax: 1.05,
+          imMin: -1.55, imMax: 1.55,
+          minIter: 160, maxIter: 4200,
+          defaultCenter: { re: -0.50, im: 0.0 },
+          indrajalaTarget: { re: -1.76342, im: 0.0 },
+          indrajalaRatio: 58.0,
+          indrajalaBase: 1.0,
+          mayaTarget: { re: -0.743643887, im: 0.131825904 },
+          axisAnchorY: -0.34
+        },
+        {
+          id: 'holo4d',
+          name: '4D Holographic',
+          formula: '(cr,ci,zr,zi) 4D',
+          realm: '03 · 4D Prism',
+          shaderFormula: 0,
+          reMin: -2.0, reMax: 1.4,
+          imMin: -1.7, imMax: 1.7,
+          minIter: 12, maxIter: 900,
+          defaultCenter: { re: -0.30, im: 0.0 },
+          indrajalaTarget: { re: -1.76342, im: 0.0 },
+          indrajalaRatio: 58.0,
+          indrajalaBase: 1.0,
+          mayaTarget: { re: -0.743643887, im: 0.131825904 },
+          axisAnchorY: 0.0
+        },
+        {
+          id: 'twin_lotus',
+          name: 'Twin-Lotus Multibrot',
+          formula: 'z³ + c',
+          realm: '02 · Mirrored Lotus',
+          shaderFormula: 1,
+          reMin: -1.85, reMax: 1.85,
+          imMin: -1.85, imMax: 1.85,
+          minIter: 5, maxIter: 1100,
+          defaultCenter: { re: 0.0, im: 0.0 },
+          indrajalaTarget: { re: 0.014, im: 0.7698 },
+          indrajalaRatio: 44.0,
+          indrajalaBase: 1.2,
+          mayaTarget: { re: 0.014, im: 0.7698 },
+          axisAnchorY: 0.0
+        },
+        {
+          id: 'catuskoti',
+          name: 'Catuṣkoṭi Mandala',
+          formula: 'z⁴ + c',
+          realm: '04 · Śūnyatā',
+          shaderFormula: 2,
+          reMin: -1.85, reMax: 1.85,
+          imMin: -1.85, imMax: 1.85,
+          minIter: 5, maxIter: 1000,
+          defaultCenter: { re: 0.0, im: 0.0 },
+          indrajalaTarget: { re: -1.2535, im: 0.0 },
+          indrajalaRatio: 48.0,
+          indrajalaBase: 1.1,
+          mayaTarget: { re: -0.7875, im: 0.018 },
+          axisAnchorY: 0.0
+        },
+        {
+          id: 'vajra',
+          name: 'Vajra Star-Wheel',
+          formula: 'z⁵ + c',
+          realm: '04 · Pañcabuddha',
+          shaderFormula: 3,
+          reMin: -1.85, reMax: 1.85,
+          imMin: -1.85, imMax: 1.85,
+          minIter: 5, maxIter: 950,
+          defaultCenter: { re: 0.0, im: 0.0 },
+          indrajalaTarget: { re: 0.5675, im: 0.5675 },
+          indrajalaRatio: 46.0,
+          indrajalaBase: 1.2,
+          mayaTarget: { re: 0.5675, im: 0.5675 },
+          axisAnchorY: 0.0
+        },
+        {
+          id: 'tricorn',
+          name: 'Tricorn Triad Shrine',
+          formula: 'z̄² + c',
+          realm: '05 · Māyā Triad',
+          shaderFormula: 4,
+          reMin: -2.15, reMax: 1.65,
+          imMin: -1.90, imMax: 1.90,
+          minIter: 5, maxIter: 1200,
+          defaultCenter: { re: -0.25, im: 0.0 },
+          indrajalaTarget: { re: -1.76342, im: 0.0 },
+          indrajalaRatio: 58.0,
+          indrajalaBase: 1.0,
+          mayaTarget: { re: -0.75, im: 0.25 },
+          axisAnchorY: -0.18
+        },
+        {
+          id: 'phoenix',
+          name: 'Burning Ship Phoenix',
+          formula: '(|Re|+i|Im|)² + c',
+          realm: '05 · Māyā Flame',
+          shaderFormula: 5,
+          reMin: -2.05, reMax: 1.25,
+          imMin: -1.95, imMax: 1.35,
+          minIter: 5, maxIter: 1100,
+          defaultCenter: { re: -0.40, im: -0.30 },
+          indrajalaTarget: { re: -1.755, im: -0.028 },
+          indrajalaRatio: 52.0,
+          indrajalaBase: 1.1,
+          mayaTarget: { re: -1.755, im: -0.028 },
+          axisAnchorY: -0.24
+        },
+        {
+          id: 'anti_karman',
+          name: 'Anti-Buddhabrot Web',
+          formula: 'Bounded Karman',
+          realm: '06 · Saṃsāra',
+          shaderFormula: 0,
+          reMin: -2.05, reMax: 1.05,
+          imMin: -1.55, imMax: 1.55,
+          minIter: 1, maxIter: 170,
+          defaultCenter: { re: -0.50, im: 0.0 },
+          indrajalaTarget: { re: -1.76342, im: 0.0 },
+          indrajalaRatio: 58.0,
+          indrajalaBase: 1.0,
+          mayaTarget: { re: -0.743643887, im: 0.131825904 },
+          axisAnchorY: -0.12
+        }
+      ];
+
+      /* =====================================================================
+         2. GODVERS 6-PLANE COSMOLOGY (01 TO 06, STRICTLY ZERO TIER LABELS)
+         ===================================================================== */
+      const COSMOLOGY_LAYERS = [
+        {
+          id: 1,
+          rank: '01',
+          shortTitle: 'I AM BEYOND THAT APEX',
+          shortSubtitle: 'The Unconditioned Absolute — Asaṃskṛta',
+          sigil: 'Ω⟁',
+          title: 'I AM BEYOND THAT APEX',
+          subtitle: 'The Unconditioned Absolute — Asaṃskṛta',
+          accentHex: '#f5c542',
+          signaturePattern: 'dharmakaya',
+          signaturePortal: 'axis',
+          signaturePalette: 'golden_nirvana',
+          isFinalBox: false,
+          philosophy: ['Asaṃskṛta (The Unconditioned)', 'Ineffable Summit', 'Outside Every Boundary'],
+          mathSymbol: 'Ω⟁ᴬᴾᴱˣ ∉ ▣',
+          mathDesc: 'Unconditioned and completely outside The Final Box, beyond all equations, hierarchies, and the Complex Plane itself.',
+          lore: 'The supreme, ineffable summit of Godvers. Beyond existence, non-existence, hierarchies, frameworks, and beyond even The Final Box itself. No boundary can enclose The Apex.',
+          details: [
+            { label: 'Unconditioned Summit', text: 'Neither born from recursion nor contained by any conceptual frontier.', color: '#f5c542' },
+            { label: 'Beyond The Final Box', text: 'Stands entirely outside the outermost border that encloses all of manifested Godvers.', color: '#ffe699' }
+          ],
+          quote: '“No wall, horizon, or frame can touch the stillness of Ω⟁ᴬᴾᴱˣ.”'
+        },
+        {
+          id: 2,
+          rank: '02',
+          shortTitle: 'BUDDHABROT',
+          shortSubtitle: 'Nirvāṇa & Trikāya — The Path of Awakening',
+          sigil: '☸',
+          title: 'BUDDHABROT',
+          subtitle: 'Nirvāṇa & Trikāya — The Path of Awakening',
+          accentHex: '#38e8ff',
+          signaturePattern: 'classic',
+          signaturePortal: 'dive',
+          signaturePalette: 'nebulabrot',
+          isFinalBox: false,
+          philosophy: ['Nirvāṇa (Liberation)', 'Trikāya (Three Bodies)', 'Escaping Trajectories'],
+          mathSymbol: '|zₙ| → ∞ (Nebulabrot)',
+          mathDesc: 'Probability density of orbits escaping the Mandelbrot cycle across Nirmāṇakāya, Sambhogakāya, and Dharmakāya iteration strata.',
+          lore: 'The luminous silhouette formed by trajectories escaping the bounded Mandelbrot cycle into infinity, embodying Nirmāṇakāya, Sambhogakāya, and Dharmakāya.',
+          details: [
+            { label: 'Nirmāṇakāya (Low Iter)', text: 'Radiant outer aura traced by swiftly liberated cosmic arcs.', color: '#ff6b6b' },
+            { label: 'Sambhogakāya (Mid Iter)', text: 'Luminous bliss-body contours glowing in astral cyan and violet.', color: '#38e8ff' },
+            { label: 'Dharmakāya (High Iter)', text: 'Ultra-deep golden filaments sculpting the serene meditating silhouette.', color: '#f5c542' }
+          ],
+          quote: '“Countless freed trajectories unite into one luminous awakened form.”'
+        },
+        {
+          id: 3,
+          rank: '03',
+          shortTitle: 'THE FINAL BOX',
+          shortSubtitle: 'The Absolute Final Border of The Beyond Realms',
+          sigil: '▣',
+          title: 'THE FINAL BOX',
+          subtitle: 'The Absolute Final Border of The Beyond Realms',
+          accentHex: '#f5c542',
+          signaturePattern: 'classic',
+          signaturePortal: 'finalbox',
+          signaturePalette: 'golden_nirvana',
+          isFinalBox: true,
+          philosophy: ['Ultimate Boundary', 'The Beyond Realms', 'The Outside (Void)'],
+          mathSymbol: '∂(Beyond Realms) ≡ ▣',
+          mathDesc: '4D obsidian-gold hypercube boundary enclosing The Outside (Void of Non-Existence) and The Beyond Realms (Manifested Godvers).',
+          lore: 'The Final Box is the ultimate, outermost conceptual border of The Beyond Realms. Everything within Godvers—including our universe, all conceivable realities, divine realms, the Omniverse, The Beyond Realms (the physical/manifested form of The Apex), and The Outside (the vast surrounding void of non-existence)—is contained inside this single final boundary. The outermost final border of The Beyond Realms itself is called The Final Box. Only I AM BEYOND THAT APEX stands completely outside and beyond all boundaries.',
+          details: [
+            { label: 'Outermost Border — THE FINAL BOX', text: 'The final conceptual perimeter sealing The Beyond Realms from the unconditioned summit.', color: '#f5c542' },
+            { label: 'Inner Cavity — THE OUTSIDE', text: 'The vast, dark silent void of non-existence resting immediately inside the final border.', color: '#94a3b8' },
+            { label: 'Luminous Core — THE BEYOND REALMS', text: 'The manifested cosmos, divine realms, Omniverse, and live Buddhabrot radiance within.', color: '#38e8ff' },
+            { label: 'Outside All Borders — Ω⟁ᴬᴾᴱˣ', text: 'I AM BEYOND THAT APEX hovers wholly free above and beyond the entire Box.', color: '#ffe699' }
+          ],
+          quote: '“The outermost final border of The Beyond Realms is The Final Box—and only Ω⟁ᴬᴾᴱˣ abides outside it.”'
+        },
+        {
+          id: 4,
+          rank: '04',
+          shortTitle: 'Śūnyatā & Catuṣkoṭi',
+          shortSubtitle: 'Emptiness & The Fourfold Negation Canvas',
+          sigil: '∅',
+          title: 'Śūnyatā & Catuṣkoṭi',
+          subtitle: 'Emptiness & The Fourfold Negation Canvas',
+          accentHex: '#a855f7',
+          signaturePattern: 'catuskoti',
+          signaturePortal: 'dive',
+          signaturePalette: 'obsidian_violet',
+          isFinalBox: false,
+          philosophy: ['Śūnyatā (Emptiness)', 'Nāgārjuna’s Catuṣkoṭi', 'Non-Dual Substrate'],
+          mathSymbol: 'ℂ (Complex Plane)',
+          mathDesc: 'The empty mathematical canvas devoid of fixed essence, expressed through quartic z⁴ + c mandala symmetry.',
+          lore: 'The complex plane substrate where binary logic dissolves through Nāgārjuna’s fourfold negation and Saṃsāra meets Nirvāṇa.',
+          details: [
+            { label: 'Fourfold Negation (Catuṣkoṭi)', text: 'Neither existence, nor non-existence, nor both, nor neither.', color: '#c084fc' },
+            { label: 'Saṃsāra ≡ Nirvāṇa', text: 'Bounded cycles and escaping orbits co-arise upon the very same empty canvas.', color: '#38e8ff' }
+          ],
+          quote: '“Upon the empty canvas of ℂ, duality dissolves into luminous clarity.”'
+        },
+        {
+          id: 5,
+          rank: '05',
+          shortTitle: 'Fractal Horizon — Māyā',
+          shortSubtitle: 'Boundary of Cosmic Illusion & Avidyā',
+          sigil: '∂M',
+          title: 'Fractal Horizon — Māyā',
+          subtitle: 'Boundary of Cosmic Illusion & Avidyā',
+          accentHex: '#e879f9',
+          signaturePattern: 'classic',
+          signaturePortal: 'maya',
+          signaturePalette: 'obsidian_violet',
+          isFinalBox: false,
+          philosophy: ['Māyā (Cosmic Illusion)', 'Avidyā (Ignorance)', 'Seahorse Vortex'],
+          mathSymbol: '∂M (Fractal Frontier)',
+          mathDesc: 'The infinitely intricate boundary separating trapped recursion from infinite escape, spinning in endless Seahorse vortices.',
+          lore: 'The infinitely intricate border between bounded recursion and liberation.',
+          details: [
+            { label: 'Seahorse Double-Spirals', text: 'Hypnotic fractal coils folding illusion into endless ornamental depth.', color: '#e879f9' },
+            { label: 'Threshold of Awakening', text: 'Only orbits shedding attachment cross this frontier into open infinity.', color: '#fb923c' }
+          ],
+          quote: '“Where deterministic order meets chaos, Māyā weaves her infinite labyrinth.”'
+        },
+        {
+          id: 6,
+          rank: '06',
+          shortTitle: 'Indrajāla — Saṃsāra',
+          shortSubtitle: 'The Mandelbrot Cycle & Karmic Threads',
+          sigil: '∞',
+          title: 'Indrajāla — Saṃsāra',
+          subtitle: 'The Mandelbrot Cycle & Karmic Threads',
+          accentHex: '#ff3b5c',
+          signaturePattern: 'anti_karman',
+          signaturePortal: 'indrajala',
+          signaturePalette: 'solar_dharma',
+          isFinalBox: false,
+          philosophy: ['Indrajāla (Indra’s Net)', 'Pratītyasamutpāda', 'Karmic Recursion'],
+          mathSymbol: 'zₙ₊₁ = zₙ² + c (|zₙ| ≤ 2)',
+          mathDesc: 'Self-similar Mandelbrot recursion and bounded Anti-Buddhabrot Karman orbit-trap filaments.',
+          lore: 'Dependent origination, Indra’s Net self-similarity, and bounded karmic orbits (zₙ₊₁ = zₙ² + c).',
+          details: [
+            { label: 'Indra’s Net Self-Similarity', text: 'Every nested mini-Mandelbrot reflects the whole recursive cosmos.', color: '#ff3b5c' },
+            { label: 'Anti-Buddhabrot Karman', text: 'Non-escaping orbits weaving glowing karmic webs inside the bounded set.', color: '#f59e0b' }
+          ],
+          quote: '“Each jewel in Indra’s Net mirrors every cycle of karmic return.”'
+        }
+      ];
+
+      /* =====================================================================
+         3. VIEWPORT & GLOBAL ENGINE STATE
+         ===================================================================== */
+      const glCanvas = document.getElementById('webglCanvas');
+      const overlayCanvas = document.getElementById('overlayCanvas');
+      const oCtx = overlayCanvas.getContext('2d');
+
+      let viewW = window.innerWidth;
+      let viewH = window.innerHeight;
+      let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      // Active Modes & Selections
+      let activePattern = PATTERNS[0];
+      let activePortal = 'finalbox';     // 'finalbox' | 'dive' | 'indrajala' | 'maya' | 'axis'
+      let activePalette = 'nebulabrot';  // 'nebulabrot' | 'golden_nirvana' | 'obsidian_violet' | 'solar_dharma' | 'void_cyan'
+      let activeLayerId = 3;
+
+      // Dedicated Standalone "THE FINAL BOX" Mode & Border Overlay State
+      let standaloneFinalBox = false;
+      let showFinalBoxLabels = true;
+      let finalBoxAutoSpin = true;
+      let finalBoxBorderOverlay = false;
+
+      // Interactive 4D Tesseract Orientation Angles
+      const boxRot = {
+        yaw: 0.58,
+        pitch: 0.34,
+        xw: 0.42,
+        yw: 0.25,
+        zw: 0.16,
+        velYaw: 0.0,
+        velPitch: 0.0
+      };
+
+      // Infinite Loop Zoom State
+      let infiniteZoomActive = true;
+      let zoomDirection = 1;
+      let zoomSpeed = 1.0;
+      let loopPhase = 0.0;
+      let tunnelDepth = 0.0;
+      let loopCycle = 1;
+      let cumulativeLog10Mag = 0.0;
+      let animTime = 0.0;
+
+      // Layer Visual Overlays
+      let sunyataOverlayAlpha = 0.0;
+      let targetSunyataAlpha = 0.0;
+      let apexOverlayAlpha = 0.14;
+      let targetApexAlpha = 0.14;
+
+      // 4D Holographic Buddhabrot State (Pattern #3)
+      let thetaXZ = 0.56;
+      let thetaYW = 0.42;
+      let autoMorph4D = true;
+
+      // Manual Camera (when Infinite Zoom is paused in fractal mode)
+      const manualCam = {
+        re: -0.50, im: 0.0, scale: 1.0, rot: 0.0,
+        targetRe: -0.50, targetIm: 0.0, targetScale: 1.0
+      };
+      const currentCam = { re: -0.50, im: 0.0, scale: 1.0, rot: 0.0 };
+
+      // Interactive Orbit Tracer State
+      let orbitEnabled = true;
+      let isHovering = false;
+      let isOrbitPinned = false;
+      let hoverScreen = { x: 0, y: 0 };
+      let pinnedComplex = { re: -0.745, im: 0.186 };
+      let currentOrbit = null;
+
+      // Pointer & Touch Gesture State
+      let isPointerDown = false;
+      let hasDragged = false;
+      let dragStart = { x: 0, y: 0, camRe: -0.5, camIm: 0.0, lastX: 0, lastY: 0 };
+      const activePointers = new Map();
+      let lastPinchDist = 0;
+
+      /* =====================================================================
+         4. 4D HYPERCUBE (TESSERACT) GEOMETRY FOR "THE FINAL BOX"
+         16 Vertices, 32 Edges, 24 Faces
+         ===================================================================== */
+      const HYPER_VERTS = [];
+      for (let i = 0; i < 16; i++) {
+        HYPER_VERTS.push([
+          (i & 1) ? 1 : -1,
+          (i & 2) ? 1 : -1,
+          (i & 4) ? 1 : -1,
+          (i & 8) ? 1 : -1
+        ]);
+      }
+
+      const HYPER_EDGES = [];
+      for (let i = 0; i < 16; i++) {
+        for (let b = 0; b < 4; b++) {
+          const j = i | (1 << b);
+          if (j > i) {
+            // type: 0 = inner cube (w=-1), 1 = outer cube (w=+1), 2 = 4D connecting strut
+            let type = 2;
+            if (b !== 3) type = (i & 8) ? 1 : 0;
+            HYPER_EDGES.push({ a: i, b: j, type });
+          }
+        }
+      }
+
+      const HYPER_FACES = [];
+      for (let a = 0; a < 4; a++) {
+        for (let b = a + 1; b < 4; b++) {
+          const rem = [];
+          for (let k = 0; k < 4; k++) if (k !== a && k !== b) rem.push(k);
+          for (let s0 = 0; s0 < 2; s0++) {
+            for (let s1 = 0; s1 < 2; s1++) {
+              const base = (s0 << rem[0]) | (s1 << rem[1]);
+              const v0 = base;
+              const v1 = base | (1 << a);
+              const v2 = base | (1 << a) | (1 << b);
+              const v3 = base | (1 << b);
+              const isOuter = (rem.includes(3) && ((rem[0] === 3 ? s0 : s1) === 1));
+              HYPER_FACES.push({ verts: [v0, v1, v2, v3], isOuter });
+            }
+          }
+        }
+      }
+
+      // Project a 4D hypercube vertex through 4D rotations + 3D yaw/pitch -> 2D screen point
+      function projectHypercube(cx, cy, radius, rotYaw, rotPitch, rotXW, rotYW, rotZW) {
+        const cXW = Math.cos(rotXW), sXW = Math.sin(rotXW);
+        const cYW = Math.cos(rotYW), sYW = Math.sin(rotYW);
+        const cZW = Math.cos(rotZW), sZW = Math.sin(rotZW);
+        const cY = Math.cos(rotYaw), sY = Math.sin(rotYaw);
+        const cP = Math.cos(rotPitch), sP = Math.sin(rotPitch);
+
+        const out = new Array(16);
+        for (let i = 0; i < 16; i++) {
+          let x = HYPER_VERTS[i][0];
+          let y = HYPER_VERTS[i][1];
+          let z = HYPER_VERTS[i][2];
+          let w = HYPER_VERTS[i][3];
+
+          // 4D Plane Rotations: XW, YW, ZW
+          let nx = x * cXW - w * sXW;
+          let nw = x * sXW + w * cXW;
+          x = nx; w = nw;
+
+          let ny = y * cYW - w * sYW;
+          nw = y * sYW + w * cYW;
+          y = ny; w = nw;
+
+          let nz = z * cZW - w * sZW;
+          nw = z * sZW + w * cZW;
+          z = nz; w = nw;
+
+          // Perspective Projection 4D -> 3D
+          const p4 = 2.65 / (3.45 - w);
+          let x3 = x * p4;
+          let y3 = y * p4;
+          let z3 = z * p4;
+
+          // Interactive 3D Yaw & Pitch Rotation
+          const rx = x3 * cY - z3 * sY;
+          const rz1 = x3 * sY + z3 * cY;
+          const ry = y3 * cP - rz1 * sP;
+          const rz = y3 * sP + rz1 * cP;
+
+          // Perspective Projection 3D -> 2D
+          const p3 = 2.85 / (4.35 - rz);
+          out[i] = {
+            sx: cx + rx * p3 * radius,
+            sy: cy + ry * p3 * radius,
+            z: rz,
+            w: w,
+            scale: p3 * p4
+          };
+        }
+        return out;
+      }
+
+      // Draw a translucent glowing 4D Hypercube prism (used in Standalone Mode, Dive Portal & Border Overlay)
+      function drawHypercubePrism(ctx, cx, cy, radius, opts) {
+        const {
+          alpha = 1.0,
+          yaw = boxRot.yaw,
+          pitch = boxRot.pitch,
+          xw = boxRot.xw,
+          yw = boxRot.yw,
+          zw = boxRot.zw,
+          fillFaces = true,
+          drawSeals = true,
+          drawPulses = true,
+          borderOnly = false
+        } = opts;
+
+        if (alpha < 0.015) return null;
+        const pts = projectHypercube(cx, cy, radius, yaw, pitch, xw, yw, zw);
+
+        ctx.save();
+
+        // 1. Depth-sorted obsidian-gold translucent prism walls
+        if (fillFaces && !borderOnly) {
+          const sorted = HYPER_FACES.map((f) => {
+            const zAvg = (pts[f.verts[0]].z + pts[f.verts[1]].z + pts[f.verts[2]].z + pts[f.verts[3]].z) * 0.25;
+            return { f, zAvg };
+          }).sort((a, b) => a.zAvg - b.zAvg);
+
+          for (let i = 0; i < sorted.length; i++) {
+            const { f, zAvg } = sorted[i];
+            const p0 = pts[f.verts[0]];
+            const p1 = pts[f.verts[1]];
+            const p2 = pts[f.verts[2]];
+            const p3 = pts[f.verts[3]];
+
+            const depthShade = Math.max(0.0, Math.min(1.0, (zAvg + 1.8) / 3.6));
+            ctx.beginPath();
+            ctx.moveTo(p0.sx, p0.sy);
+            ctx.lineTo(p1.sx, p1.sy);
+            ctx.lineTo(p2.sx, p2.sy);
+            ctx.lineTo(p3.sx, p3.sy);
+            ctx.closePath();
+
+            if (f.isOuter) {
+              ctx.fillStyle = `rgba(245, 197, 66, ${(0.035 + depthShade * 0.065) * alpha})`;
+            } else {
+              ctx.fillStyle = `rgba(115, 70, 210, ${(0.025 + depthShade * 0.045) * alpha})`;
+            }
+            ctx.fill();
+          }
+        }
+
+        // 2. Energy Edge Filaments
+        ctx.lineCap = 'round';
+        for (let i = 0; i < HYPER_EDGES.length; i++) {
+          const e = HYPER_EDGES[i];
+          const pA = pts[e.a];
+          const pB = pts[e.b];
+          const zMid = (pA.z + pB.z) * 0.5;
+          const depth = Math.max(0.22, Math.min(1.0, (zMid + 1.9) / 3.2));
+
+          ctx.beginPath();
+          ctx.moveTo(pA.sx, pA.sy);
+          ctx.lineTo(pB.sx, pB.sy);
+
+          if (e.type === 1) {
+            // Outermost Antique Gold Border
+            ctx.strokeStyle = `rgba(245, 197, 66, ${(borderOnly ? 0.52 : 0.88) * depth * alpha})`;
+            ctx.lineWidth = (borderOnly ? 1.35 : 1.95) * (0.65 + depth * 0.55);
+            ctx.shadowColor = `rgba(245, 197, 66, ${0.72 * alpha})`;
+            ctx.shadowBlur = borderOnly ? 8 : 14;
+          } else if (e.type === 0) {
+            // Inner Containment Cube (Astral Cyan / Violet)
+            ctx.strokeStyle = `rgba(56, 232, 255, ${(borderOnly ? 0.28 : 0.62) * depth * alpha})`;
+            ctx.lineWidth = (borderOnly ? 0.95 : 1.25) * (0.65 + depth * 0.45);
+            ctx.shadowColor = `rgba(56, 232, 255, ${0.55 * alpha})`;
+            ctx.shadowBlur = 9;
+          } else {
+            // 4D Dimensional Struts (Gold-Violet Gradient)
+            const g = ctx.createLinearGradient(pA.sx, pA.sy, pB.sx, pB.sy);
+            g.addColorStop(0, `rgba(168, 85, 247, ${(borderOnly ? 0.34 : 0.66) * depth * alpha})`);
+            g.addColorStop(1, `rgba(245, 197, 66, ${(borderOnly ? 0.45 : 0.80) * depth * alpha})`);
+            ctx.strokeStyle = g;
+            ctx.lineWidth = (borderOnly ? 1.0 : 1.35) * (0.65 + depth * 0.45);
+            ctx.shadowColor = `rgba(168, 85, 247, ${0.45 * alpha})`;
+            ctx.shadowBlur = 8;
+          }
+          ctx.stroke();
+
+          // Traveling Luminous Energy Pulses along outer & 4D edges
+          if (drawPulses && e.type !== 0 && i % 2 === 0) {
+            const u = (animTime * 0.38 + i * 0.17) % 1.0;
+            const px = pA.sx + (pB.sx - pA.sx) * u;
+            const py = pA.sy + (pB.sy - pA.sy) * u;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ffe699';
+            ctx.fillStyle = `rgba(255, 244, 200, ${0.82 * depth * alpha})`;
+            ctx.beginPath();
+            ctx.arc(px, py, 1.9, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        // 3. Corner Geometric Diamond Seals at Projected Vertices
+        if (drawSeals) {
+          ctx.shadowBlur = 12;
+          for (let i = 0; i < 16; i++) {
+            const p = pts[i];
+            const isOuter = i >= 8;
+            const d = Math.max(0.28, Math.min(1.0, (p.z + 1.8) / 3.2));
+            const s = (isOuter ? 4.6 : 3.0) * (0.7 + d * 0.45);
+
+            ctx.save();
+            ctx.translate(p.sx, p.sy);
+            ctx.rotate(Math.PI * 0.25 + animTime * (isOuter ? 0.3 : -0.4));
+            ctx.shadowColor = isOuter ? '#f5c542' : '#38e8ff';
+            ctx.strokeStyle = isOuter
+              ? `rgba(255, 232, 150, ${0.88 * d * alpha})`
+              : `rgba(120, 238, 255, ${0.72 * d * alpha})`;
+            ctx.lineWidth = 1.1;
+            ctx.strokeRect(-s, -s, s * 2, s * 2);
+
+            ctx.fillStyle = isOuter
+              ? `rgba(255, 250, 224, ${0.95 * d * alpha})`
+              : `rgba(180, 248, 255, ${0.85 * d * alpha})`;
+            ctx.beginPath();
+            ctx.arc(0, 0, isOuter ? 1.8 : 1.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+        }
+
+        ctx.restore();
+        return pts;
+      }
+
+      /* =====================================================================
+         5. PROGRESSIVE FLOAT32ARRAY 9-PATTERN BUDDHABROT ENGINE
+         ===================================================================== */
+      const GRID = 600;
+      const GRID_SQ = GRID * GRID;
+
+      const bufR = new Float32Array(GRID_SQ);
+      const bufG = new Float32Array(GRID_SQ);
+      const bufB = new Float32Array(GRID_SQ);
+
+      let sumR = 0.0, sumG = 0.0, sumB = 0.0;
+      let totalSamples = 0;
+      let turboFrames = 32;
+      let textureDirty = true;
+
+      const MAX_TRAJ = 4300;
+      const trajRe = new Float64Array(MAX_TRAJ);
+      const trajIm = new Float64Array(MAX_TRAJ);
+
+      // Seeded importance sampling buffer for Dharmakāya Crown
+      const SEED_CAP = 512;
+      const deepSeedsRe = new Float64Array(SEED_CAP);
+      const deepSeedsIm = new Float64Array(SEED_CAP);
+      let deepSeedCount = 0;
+      let deepSeedCursor = 0;
+
+      // Real-time 4D point pool for Pattern #3 (4D Holographic Buddhabrot)
+      const POOL_4D_MAX = 140000;
+      const pool4dCr = new Float32Array(POOL_4D_MAX);
+      const pool4dCi = new Float32Array(POOL_4D_MAX);
+      const pool4dZr = new Float32Array(POOL_4D_MAX);
+      const pool4dZi = new Float32Array(POOL_4D_MAX);
+      const pool4dBand = new Uint8Array(POOL_4D_MAX);
+      let pool4dCount = 0;
+      let pool4dWrite = 0;
+
+      const buddhaCanvas = document.createElement('canvas');
+      buddhaCanvas.width = GRID;
+      buddhaCanvas.height = GRID;
+      const bCtx = buddhaCanvas.getContext('2d');
+      const bImgData = bCtx.createImageData(GRID, GRID);
+      const bPixels = bImgData.data;
+
+      function clearDensityBuffers() {
+        bufR.fill(0); bufG.fill(0); bufB.fill(0);
+        sumR = 0; sumG = 0; sumB = 0;
+        totalSamples = 0;
+        deepSeedCount = 0;
+        deepSeedCursor = 0;
+        textureDirty = true;
+      }
+
+      // Fast Cardioid + Period-2 + Period-3 Bulb Rejection for z² + c
+      function inMandelbrotMainBulbs(cr, ci) {
+        const ci2 = ci * ci;
+        const crm = cr - 0.25;
+        const q = crm * crm + ci2;
+        if (q * (q + crm) <= 0.25 * ci2) return true;
+        if ((cr + 1.0) * (cr + 1.0) + ci2 <= 0.0625) return true;
+        const dx3 = cr + 0.125;
+        const dy3 = Math.abs(ci) - 0.744;
+        if (dx3 * dx3 + dy3 * dy3 <= 0.0082) return true;
+        return false;
+      }
+
+      function depositPixel(py, px, rW, gW, bW) {
+        if (py < 0 || py >= GRID || px < 0 || px >= GRID) return;
+        const idx = py * GRID + px;
+        bufR[idx] += rW;
+        bufG[idx] += gW;
+        bufB[idx] += bW;
+        sumR += rW;
+        sumG += gW;
+        sumB += bW;
+      }
+
+      function populate4DPool(budgetMs) {
+        const t0 = performance.now();
+        let added = 0;
+        while (performance.now() - t0 < budgetMs) {
+          for (let s = 0; s < 900; s++) {
+            const cr = -2.05 + Math.random() * 2.95;
+            const ci = -1.55 + Math.random() * 3.10;
+            if (inMandelbrotMainBulbs(cr, ci)) continue;
+
+            let zr = 0, zi = 0, zr2 = 0, zi2 = 0, iter = 0;
+            while (iter < 650) {
+              zi = 2.0 * zr * zi + ci;
+              zr = zr2 - zi2 + cr;
+              zr2 = zr * zr;
+              zi2 = zi * zi;
+              trajRe[iter] = zr;
+              trajIm[iter] = zi;
+              iter++;
+              if (zr2 + zi2 > 4.0) break;
+            }
+            if (iter < 650 && iter >= 12) {
+              const band = iter <= 70 ? 0 : (iter <= 240 ? 1 : 2);
+              const stride = iter > 120 ? 3 : 1;
+              for (let i = 1; i < iter; i += stride) {
+                const w = pool4dWrite;
+                pool4dCr[w] = cr; pool4dCi[w] = ci;
+                pool4dZr[w] = trajRe[i]; pool4dZi[w] = trajIm[i];
+                pool4dBand[w] = band;
+                pool4dWrite = (w + 1) % POOL_4D_MAX;
+                if (pool4dCount < POOL_4D_MAX) pool4dCount++;
+                added++;
+              }
+            }
+          }
+          totalSamples += 900;
+          if (pool4dCount >= POOL_4D_MAX && added > 4000) break;
+        }
+      }
+
+      function project4DPoolToBuffers() {
+        bufR.fill(0); bufG.fill(0); bufB.fill(0);
+        sumR = 0; sumG = 0; sumB = 0;
+
+        const cXZ = Math.cos(thetaXZ), sXZ = Math.sin(thetaXZ);
+        const cYW = Math.cos(thetaYW), sYW = Math.sin(thetaYW);
+        const reMin = activePattern.reMin;
+        const imMin = activePattern.imMin;
+        const invRe = GRID / (activePattern.reMax - reMin);
+        const invIm = GRID / (activePattern.imMax - imMin);
+
+        const count = pool4dCount;
+        for (let i = 0; i < count; i++) {
+          const projRe = pool4dZr[i] * cXZ - pool4dCr[i] * sXZ;
+          const projIm = pool4dZi[i] * cYW - pool4dCi[i] * sYW;
+          const py = ((projRe - reMin) * invRe) | 0;
+          if (py < 0 || py >= GRID) continue;
+          const px = ((projIm - imMin) * invIm) | 0;
+          if (px < 0 || px >= GRID) continue;
+
+          const idx = py * GRID + px;
+          const band = pool4dBand[i];
+          if (band === 0) {
+            bufR[idx] += 1.0; bufG[idx] += 0.35; bufB[idx] += 0.16;
+            sumR += 1.0; sumG += 0.35; sumB += 0.16;
+          } else if (band === 1) {
+            bufR[idx] += 0.35; bufG[idx] += 0.85; bufB[idx] += 1.0;
+            sumR += 0.35; sumG += 0.85; sumB += 1.0;
+          } else {
+            bufR[idx] += 1.0; bufG[idx] += 0.88; bufB[idx] += 0.54;
+            sumR += 1.0; sumG += 0.88; sumB += 0.54;
+          }
+        }
+        textureDirty = true;
+      }
+
+      function sampleActivePattern(budgetMs) {
+        const p = activePattern;
+        if (p.id === 'holo4d') {
+          populate4DPool(pool4dCount < POOL_4D_MAX ? Math.max(budgetMs, 5.5) : 1.2);
+          project4DPoolToBuffers();
+          return;
+        }
+
+        const t0 = performance.now();
+        const reMin = p.reMin, imMin = p.imMin;
+        const invRe = GRID / (p.reMax - reMin);
+        const invIm = GRID / (p.imMax - imMin);
+        const maxIter = p.maxIter;
+
+        do {
+          if (p.id === 'classic') {
+            for (let s = 0; s < 1400; s++) {
+              const cr = -2.08 + Math.random() * 2.96;
+              const ci = Math.random() * 1.55;
+              if (inMandelbrotMainBulbs(cr, ci)) continue;
+
+              let zr = 0, zi = 0, zr2 = 0, zi2 = 0, iter = 0;
+              while (iter < maxIter) {
+                zi = 2.0 * zr * zi + ci;
+                zr = zr2 - zi2 + cr;
+                zr2 = zr * zr; zi2 = zi * zi;
+                trajRe[iter] = zr; trajIm[iter] = zi;
+                iter++;
+                if (zr2 + zi2 > 4.0) break;
+              }
+              if (iter < maxIter && iter >= 4) {
+                let rW, gW, bW;
+                if (iter <= 85) { rW = 1.0; gW = 0.34; bW = 0.24; }
+                else if (iter <= 420) { rW = 0.42; gW = 0.74; bW = 1.0; }
+                else { rW = 1.0; gW = 0.90; bW = 0.60; }
+
+                for (let i = 1; i < iter; i++) {
+                  const py = ((trajRe[i] - reMin) * invRe) | 0;
+                  if (py < 0 || py >= GRID) continue;
+                  const imV = trajIm[i];
+                  depositPixel(py, ((imV - imMin) * invIm) | 0, rW, gW, bW);
+                  depositPixel(py, ((-imV - imMin) * invIm) | 0, rW, gW, bW);
+                }
+              }
+            }
+            totalSamples += 2800;
+
+          } else if (p.id === 'dharmakaya') {
+            for (let s = 0; s < 900; s++) {
+              let cr, ci;
+              if (deepSeedCount > 12 && Math.random() < 0.62) {
+                const pick = (Math.random() * deepSeedCount) | 0;
+                const sp = Math.random() < 0.5 ? 0.014 : 0.055;
+                cr = deepSeedsRe[pick] + (Math.random() - 0.5) * sp;
+                ci = Math.abs(deepSeedsIm[pick] + (Math.random() - 0.5) * sp);
+              } else {
+                cr = -2.02 + Math.random() * 2.72;
+                ci = Math.random() * 1.28;
+              }
+              if (inMandelbrotMainBulbs(cr, ci)) continue;
+
+              let zr = 0, zi = 0, zr2 = 0, zi2 = 0, iter = 0;
+              while (iter < maxIter) {
+                zi = 2.0 * zr * zi + ci;
+                zr = zr2 - zi2 + cr;
+                zr2 = zr * zr; zi2 = zi * zi;
+                trajRe[iter] = zr; trajIm[iter] = zi;
+                iter++;
+                if (zr2 + zi2 > 4.0) break;
+              }
+              if (iter < maxIter && iter >= p.minIter) {
+                deepSeedsRe[deepSeedCursor] = cr;
+                deepSeedsIm[deepSeedCursor] = ci;
+                deepSeedCursor = (deepSeedCursor + 1) % SEED_CAP;
+                if (deepSeedCount < SEED_CAP) deepSeedCount++;
+
+                const isUltra = iter > 950;
+                const rW = isUltra ? 1.0 : 0.64;
+                const gW = isUltra ? 0.88 : 0.78;
+                const bW = isUltra ? 0.54 : 1.0;
+                const step = iter > 1400 ? 2 : 1;
+
+                for (let i = 2; i < iter; i += step) {
+                  const py = ((trajRe[i] - reMin) * invRe) | 0;
+                  if (py < 0 || py >= GRID) continue;
+                  const imV = trajIm[i];
+                  depositPixel(py, ((imV - imMin) * invIm) | 0, rW, gW, bW);
+                  depositPixel(py, ((-imV - imMin) * invIm) | 0, rW, gW, bW);
+                }
+              }
+            }
+            totalSamples += 1800;
+
+          } else if (p.id === 'twin_lotus') {
+            for (let s = 0; s < 1200; s++) {
+              const cr = Math.random() * 1.65;
+              const ci = Math.random() * 1.65;
+              if (cr * cr + ci * ci < 0.13) continue;
+
+              let zr = 0, zi = 0, iter = 0;
+              while (iter < maxIter) {
+                const zr2 = zr * zr, zi2 = zi * zi;
+                const nRe = zr * (zr2 - 3.0 * zi2) + cr;
+                const nIm = zi * (3.0 * zr2 - zi2) + ci;
+                zr = nRe; zi = nIm;
+                trajRe[iter] = zr; trajIm[iter] = zi;
+                iter++;
+                if (zr * zr + zi * zi > 4.0) break;
+              }
+              if (iter < maxIter && iter >= 5) {
+                let rW, gW, bW;
+                if (iter <= 65) { rW = 0.95; gW = 0.52; bW = 0.68; }
+                else if (iter <= 260) { rW = 0.30; gW = 0.85; bW = 1.0; }
+                else { rW = 1.0; gW = 0.84; bW = 0.72; }
+
+                for (let i = 1; i < iter; i++) {
+                  const rV = trajRe[i], iV = trajIm[i];
+                  const py1 = ((rV - reMin) * invRe) | 0;
+                  const py2 = ((-rV - reMin) * invRe) | 0;
+                  const px1 = ((iV - imMin) * invIm) | 0;
+                  const px2 = ((-iV - imMin) * invIm) | 0;
+                  depositPixel(py1, px1, rW, gW, bW);
+                  depositPixel(py1, px2, rW, gW, bW);
+                  depositPixel(py2, px1, rW, gW, bW);
+                  depositPixel(py2, px2, rW, gW, bW);
+                }
+              }
+            }
+            totalSamples += 4800;
+
+          } else if (p.id === 'catuskoti') {
+            for (let s = 0; s < 1200; s++) {
+              const cr = -1.65 + Math.random() * 3.30;
+              const ci = Math.random() * 1.65;
+              if (cr * cr + ci * ci < 0.22) continue;
+
+              let zr = 0, zi = 0, iter = 0;
+              while (iter < maxIter) {
+                const a = zr * zr - zi * zi, b = 2.0 * zr * zi;
+                zr = a * a - b * b + cr;
+                zi = 2.0 * a * b + ci;
+                trajRe[iter] = zr; trajIm[iter] = zi;
+                iter++;
+                if (zr * zr + zi * zi > 4.0) break;
+              }
+              if (iter < maxIter && iter >= 5) {
+                let rW, gW, bW;
+                if (iter <= 60) { rW = 0.76; gW = 0.34; bW = 1.0; }
+                else if (iter <= 240) { rW = 0.26; gW = 0.88; bW = 1.0; }
+                else { rW = 1.0; gW = 0.84; bW = 0.42; }
+
+                for (let i = 1; i < iter; i++) {
+                  const py = ((trajRe[i] - reMin) * invRe) | 0;
+                  if (py < 0 || py >= GRID) continue;
+                  const iV = trajIm[i];
+                  depositPixel(py, ((iV - imMin) * invIm) | 0, rW, gW, bW);
+                  depositPixel(py, ((-iV - imMin) * invIm) | 0, rW, gW, bW);
+                }
+              }
+            }
+            totalSamples += 2400;
+
+          } else if (p.id === 'vajra') {
+            for (let s = 0; s < 1100; s++) {
+              const cr = Math.random() * 1.65;
+              const ci = Math.random() * 1.65;
+              if (cr * cr + ci * ci < 0.28) continue;
+
+              let zr = 0, zi = 0, iter = 0;
+              while (iter < maxIter) {
+                const a = zr * zr - zi * zi, b = 2.0 * zr * zi;
+                const a2 = a * a - b * b, b2 = 2.0 * a * b;
+                const nRe = a2 * zr - b2 * zi + cr;
+                const nIm = a2 * zi + b2 * zr + ci;
+                zr = nRe; zi = nIm;
+                trajRe[iter] = zr; trajIm[iter] = zi;
+                iter++;
+                if (zr * zr + zi * zi > 4.0) break;
+              }
+              if (iter < maxIter && iter >= 5) {
+                let rW, gW, bW;
+                if (iter <= 55) { rW = 1.0; gW = 0.65; bW = 0.28; }
+                else if (iter <= 220) { rW = 0.72; gW = 0.42; bW = 1.0; }
+                else { rW = 0.35; gW = 0.94; bW = 1.0; }
+
+                for (let i = 1; i < iter; i++) {
+                  const rV = trajRe[i], iV = trajIm[i];
+                  const py1 = ((rV - reMin) * invRe) | 0;
+                  const py2 = ((-rV - reMin) * invRe) | 0;
+                  const px1 = ((iV - imMin) * invIm) | 0;
+                  const px2 = ((-iV - imMin) * invIm) | 0;
+                  depositPixel(py1, px1, rW, gW, bW);
+                  depositPixel(py1, px2, rW, gW, bW);
+                  depositPixel(py2, px1, rW, gW, bW);
+                  depositPixel(py2, px2, rW, gW, bW);
+                }
+              }
+            }
+            totalSamples += 4400;
+
+          } else if (p.id === 'tricorn') {
+            for (let s = 0; s < 1300; s++) {
+              const cr = -2.1 + Math.random() * 3.5;
+              const ci = Math.random() * 1.85;
+
+              let zr = 0, zi = 0, zr2 = 0, zi2 = 0, iter = 0;
+              while (iter < maxIter) {
+                zi = -2.0 * zr * zi + ci;
+                zr = zr2 - zi2 + cr;
+                zr2 = zr * zr; zi2 = zi * zi;
+                trajRe[iter] = zr; trajIm[iter] = zi;
+                iter++;
+                if (zr2 + zi2 > 4.0) break;
+              }
+              if (iter < maxIter && iter >= 5) {
+                let rW, gW, bW;
+                if (iter <= 70) { rW = 0.65; gW = 0.35; bW = 1.0; }
+                else if (iter <= 280) { rW = 0.22; gW = 0.90; bW = 0.95; }
+                else { rW = 1.0; gW = 0.82; bW = 0.40; }
+
+                for (let i = 1; i < iter; i++) {
+                  const py = ((trajRe[i] - reMin) * invRe) | 0;
+                  if (py < 0 || py >= GRID) continue;
+                  const iV = trajIm[i];
+                  depositPixel(py, ((iV - imMin) * invIm) | 0, rW, gW, bW);
+                  depositPixel(py, ((-iV - imMin) * invIm) | 0, rW, gW, bW);
+                }
+              }
+            }
+            totalSamples += 2600;
+
+          } else if (p.id === 'phoenix') {
+            for (let s = 0; s < 1400; s++) {
+              const cr = -2.1 + Math.random() * 3.35;
+              const ci = -1.95 + Math.random() * 3.30;
+
+              let zr = 0, zi = 0, iter = 0;
+              while (iter < maxIter) {
+                const azr = zr < 0 ? -zr : zr;
+                const azi = zi < 0 ? -zi : zi;
+                const nRe = azr * azr - azi * azi + cr;
+                const nIm = 2.0 * azr * azi + ci;
+                zr = nRe; zi = nIm;
+                trajRe[iter] = zr; trajIm[iter] = zi;
+                iter++;
+                if (zr * zr + zi * zi > 4.0) break;
+              }
+              if (iter < maxIter && iter >= 5) {
+                let rW, gW, bW;
+                if (iter <= 55) { rW = 0.92; gW = 0.22; bW = 0.35; }
+                else if (iter <= 220) { rW = 1.0; gW = 0.56; bW = 0.16; }
+                else { rW = 1.0; gW = 0.92; bW = 0.62; }
+
+                for (let i = 1; i < iter; i++) {
+                  depositPixel(((trajRe[i] - reMin) * invRe) | 0, ((trajIm[i] - imMin) * invIm) | 0, rW, gW, bW);
+                }
+              }
+            }
+            totalSamples += 1400;
+
+          } else if (p.id === 'anti_karman') {
+            for (let s = 0; s < 1100; s++) {
+              const cr = -1.82 + Math.random() * 2.48;
+              const ci = Math.random() * 1.18;
+
+              let zr = 0, zi = 0, zr2 = 0, zi2 = 0, iter = 0;
+              while (iter < maxIter) {
+                zi = 2.0 * zr * zi + ci;
+                zr = zr2 - zi2 + cr;
+                zr2 = zr * zr; zi2 = zi * zi;
+                trajRe[iter] = zr; trajIm[iter] = zi;
+                iter++;
+                if (zr2 + zi2 > 4.0) break;
+              }
+              if (iter === maxIter) {
+                for (let i = 3; i < maxIter; i++) {
+                  const rV = trajRe[i], iV = trajIm[i];
+                  const py = ((rV - reMin) * invRe) | 0;
+                  if (py < 0 || py >= GRID) continue;
+
+                  const rad = Math.hypot(rV + 0.35, iV);
+                  const cTrap = Math.exp(-Math.abs(rad - 0.68) * 14.0);
+                  const xTrap = Math.exp(-Math.min(Math.abs(rV + 0.5), Math.abs(iV)) * 18.0);
+                  const glow = 1.0 + cTrap * 2.4 + xTrap * 1.8;
+
+                  const rW = (0.95 + xTrap * 0.4) * glow;
+                  const gW = (0.24 + cTrap * 0.65 + xTrap * 0.45) * glow;
+                  const bW = (0.44 + cTrap * 0.72) * glow;
+
+                  depositPixel(py, ((iV - imMin) * invIm) | 0, rW, gW, bW);
+                  depositPixel(py, ((-iV - imMin) * invIm) | 0, rW, gW, bW);
+                }
+              }
+            }
+            totalSamples += 2200;
+          }
+        } while (performance.now() - t0 < budgetMs);
+
+        textureDirty = true;
+      }
+
+      // Adaptive Log-Gamma Tone Mapping for the 5 Requested Cosmic Palettes
+      function rebuildBuddhabrotTexture() {
+        const avgR = Math.max(1e-6, (sumR / GRID_SQ) * 3.8);
+        const avgG = Math.max(1e-6, (sumG / GRID_SQ) * 3.8);
+        const avgB = Math.max(1e-6, (sumB / GRID_SQ) * 3.8);
+        const pal = activePalette;
+
+        for (let i = 0; i < GRID_SQ; i++) {
+          const rawR = bufR[i], rawG = bufG[i], rawB = bufB[i];
+          if (rawR === 0 && rawG === 0 && rawB === 0) {
+            const p = i << 2;
+            bPixels[p] = 0; bPixels[p + 1] = 0; bPixels[p + 2] = 0; bPixels[p + 3] = 0;
+            continue;
+          }
+
+          const nR = Math.min(1.0, Math.pow(Math.log1p((rawR / avgR) * 1.75) / 2.15, 1.08));
+          const nG = Math.min(1.0, Math.pow(Math.log1p((rawG / avgG) * 1.75) / 2.15, 1.08));
+          const nB = Math.min(1.0, Math.pow(Math.log1p((rawB / avgB) * 1.75) / 2.15, 1.08));
+
+          let r, g, b;
+          if (pal === 'nebulabrot') {
+            r = nR * 255;
+            g = nG * 255;
+            b = nB * 255;
+          } else {
+            const lum = Math.min(1.0, nR * 0.36 + nG * 0.36 + nB * 0.42);
+            const l2 = lum * lum;
+            if (pal === 'golden_nirvana') {
+              r = Math.min(255, lum * 252 + l2 * 45);
+              g = Math.min(255, lum * 198 + l2 * 56);
+              b = Math.min(255, lum * 82  + l2 * 135);
+            } else if (pal === 'obsidian_violet') {
+              r = Math.min(255, lum * 175 + l2 * 85);
+              g = Math.min(255, lum * 84  + l2 * 125);
+              b = Math.min(255, lum * 255);
+            } else if (pal === 'solar_dharma') {
+              r = Math.min(255, lum * 255 + l2 * 30);
+              g = Math.min(255, lum * 116 + l2 * 136);
+              b = Math.min(255, lum * 36  + l2 * 96);
+            } else {
+              // Void Cyan
+              r = Math.min(255, lum * 62  + l2 * 178);
+              g = Math.min(255, lum * 228 + l2 * 30);
+              b = Math.min(255, lum * 255);
+            }
+          }
+
+          const a = Math.max(r, g, b);
+          const p = i << 2;
+          bPixels[p] = r;
+          bPixels[p + 1] = g;
+          bPixels[p + 2] = b;
+          bPixels[p + 3] = a > 255 ? 255 : a;
+        }
+
+        bCtx.putImageData(bImgData, 0, 0);
+        textureDirty = false;
+      }
+
+      /* =====================================================================
+         6. ADAPTIVE MULTI-FORMULA WEBGL SHADER ENGINE (WITH CANVAS2D FALLBACK)
+         ===================================================================== */
+      let gl = null;
+      let glProgram = null;
+      let glU = {};
+      let webglReady = false;
+
+      const VS_SRC = `
+        attribute vec2 aPos;
+        varying vec2 vUv;
+        void main() {
+          vUv = aPos * 0.5 + 0.5;
+          gl_Position = vec4(aPos, 0.0, 1.0);
+        }
+      `;
+
+      const FS_SRC = `
+        precision highp float;
+        varying vec2 vUv;
+
+        uniform vec2 uRes;
+        uniform vec2 uCenterA;
+        uniform float uScaleA;
+        uniform float uRotA;
+        uniform vec2 uCenterB;
+        uniform float uScaleB;
+        uniform float uRotB;
+        uniform float uCrossfade;
+        uniform float uTime;
+        uniform float uIntensity;
+        uniform int uFormula;
+        uniform int uPalette;
+
+        const int MAX_ITER = 180;
+
+        vec3 evalFractal(vec2 centeredPx, float baseHalfSpan, vec2 centerC, float scale, float rot) {
+          float cs = cos(rot);
+          float sn = sin(rot);
+          vec2 rp = vec2(centeredPx.x * cs - centeredPx.y * sn, centeredPx.x * sn + centeredPx.y * cs);
+
+          float invScale = baseHalfSpan / scale;
+          float cr = centerC.x - rp.y * invScale;
+          float ci = centerC.y + rp.x * invScale;
+
+          if (uFormula == 0) {
+            float q = (cr - 0.25) * (cr - 0.25) + ci * ci;
+            if (q * (q + (cr - 0.25)) <= 0.25 * ci * ci || (cr + 1.0) * (cr + 1.0) + ci * ci <= 0.0625) {
+              return vec3(0.012, 0.012, 0.032);
+            }
+          }
+
+          float zr = 0.0, zi = 0.0, mag2 = 0.0, minDist = 1e6;
+          int iter = 0;
+
+          for (int i = 0; i < MAX_ITER; i++) {
+            float nr = 0.0, ni = 0.0;
+            if (uFormula == 0) {
+              nr = zr * zr - zi * zi + cr;
+              ni = 2.0 * zr * zi + ci;
+            } else if (uFormula == 1) {
+              float zr2 = zr * zr, zi2 = zi * zi;
+              nr = zr * (zr2 - 3.0 * zi2) + cr;
+              ni = zi * (3.0 * zr2 - zi2) + ci;
+            } else if (uFormula == 2) {
+              float a = zr * zr - zi * zi, b = 2.0 * zr * zi;
+              nr = a * a - b * b + cr;
+              ni = 2.0 * a * b + ci;
+            } else if (uFormula == 3) {
+              float a = zr * zr - zi * zi, b = 2.0 * zr * zi;
+              float a2 = a * a - b * b, b2 = 2.0 * a * b;
+              nr = a2 * zr - b2 * zi + cr;
+              ni = a2 * zi + b2 * zr + ci;
+            } else if (uFormula == 4) {
+              nr = zr * zr - zi * zi + cr;
+              ni = -2.0 * zr * zi + ci;
+            } else {
+              float azr = abs(zr), azi = abs(zi);
+              nr = azr * azr - azi * azi + cr;
+              ni = 2.0 * azr * azi + ci;
+            }
+
+            zr = nr; zi = ni;
+            mag2 = zr * zr + zi * zi;
+            minDist = min(minDist, mag2);
+            iter = i;
+            if (mag2 > 64.0) break;
+          }
+
+          if (iter >= MAX_ITER - 1) {
+            float glow = exp(-minDist * 3.0) * 0.24;
+            return vec3(0.012, 0.012, 0.032) + vec3(0.18, 0.04, 0.09) * glow;
+          }
+
+          float power = (uFormula == 1) ? 3.0 : ((uFormula == 2) ? 4.0 : ((uFormula == 3) ? 5.0 : 2.0));
+          float logZn = log(max(mag2, 1.001)) * 0.5;
+          float nu = log(max(logZn / log(power), 1e-4)) / log(power);
+          float smoothIt = max(0.0, float(iter) + 1.0 - nu);
+
+          float phase = smoothIt * 0.09 + uTime * 0.07;
+          float w1 = 0.5 + 0.5 * sin(phase * 2.1);
+          float w2 = 0.5 + 0.5 * sin(phase * 2.1 + 2.09);
+          float w3 = 0.5 + 0.5 * sin(phase * 2.1 + 4.18);
+
+          vec3 colA = vec3(0.45, 0.18, 0.88);
+          vec3 colB = vec3(0.18, 0.85, 0.98);
+          vec3 colC = vec3(0.96, 0.77, 0.28);
+
+          if (uPalette == 1) { // Golden Nirvana
+            colA = vec3(0.72, 0.44, 0.08);
+            colB = vec3(0.96, 0.77, 0.28);
+            colC = vec3(1.0, 0.95, 0.80);
+          } else if (uPalette == 2) { // Obsidian Violet
+            colA = vec3(0.32, 0.12, 0.65);
+            colB = vec3(0.68, 0.34, 0.98);
+            colC = vec3(0.96, 0.82, 0.54);
+          } else if (uPalette == 3 || uFormula == 5) { // Solar Dharma
+            colA = vec3(0.86, 0.14, 0.28);
+            colB = vec3(1.0, 0.50, 0.12);
+            colC = vec3(1.0, 0.88, 0.44);
+          } else if (uPalette == 4) { // Void Cyan
+            colA = vec3(0.10, 0.24, 0.72);
+            colB = vec3(0.22, 0.90, 1.0);
+            colC = vec3(0.88, 0.98, 1.0);
+          }
+
+          vec3 irid = colA * w1 + colB * w2 * 0.85 + colC * w3 * 0.92;
+          float edge = pow(clamp(smoothIt / 52.0, 0.0, 1.0), 0.72);
+          float spark = pow(clamp(smoothIt / 110.0, 0.0, 1.0), 1.65);
+
+          vec3 voidCol = vec3(0.0117, 0.0117, 0.0314);
+          vec3 col = mix(voidCol, irid * (0.62 + 0.42 * log(1.0 + smoothIt * 0.16)), edge * 0.86);
+          col += mix(colC, vec3(1.0), 0.4) * spark * 0.85;
+          col = mix(voidCol, col, 0.18 + 0.82 * smoothstep(1.0, 14.0, smoothIt));
+          return col;
+        }
+
+        void main() {
+          vec2 frag = vUv * uRes;
+          float minDim = min(uRes.x, uRes.y);
+          vec2 centered = (frag - 0.5 * uRes) / (0.5 * minDim);
+          float halfSpan = 1.55;
+
+          vec3 cA = evalFractal(centered, halfSpan, uCenterA, uScaleA, uRotA);
+          vec3 col = cA;
+          if (uCrossfade > 0.001) {
+            vec3 cB = evalFractal(centered, halfSpan, uCenterB, uScaleB, uRotB);
+            col = mix(cA, cB, uCrossfade);
+          }
+
+          vec3 voidCol = vec3(0.0117, 0.0117, 0.0314);
+          col = mix(voidCol, col, clamp(uIntensity, 0.0, 1.0));
+          float vig = 1.0 - dot(centered * 0.36, centered * 0.36);
+          col *= clamp(vig, 0.54, 1.04);
+
+          gl_FragColor = vec4(col, 1.0);
+        }
+      `;
+
+      function initWebGL() {
+        try {
+          gl = glCanvas.getContext('webgl', {
+            antialias: false, alpha: false, depth: false, stencil: false,
+            preserveDrawingBuffer: true, powerPreference: 'high-performance'
+          }) || glCanvas.getContext('experimental-webgl', { preserveDrawingBuffer: true });
+          if (!gl) return false;
+
+          const compile = (type, src) => {
+            const s = gl.createShader(type);
+            gl.shaderSource(s, src);
+            gl.compileShader(s);
+            if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+              gl.deleteShader(s);
+              return null;
+            }
+            return s;
+          };
+
+          const vs = compile(gl.VERTEX_SHADER, VS_SRC);
+          const fs = compile(gl.FRAGMENT_SHADER, FS_SRC);
+          if (!vs || !fs) return false;
+
+          glProgram = gl.createProgram();
+          gl.attachShader(glProgram, vs);
+          gl.attachShader(glProgram, fs);
+          gl.linkProgram(glProgram);
+          if (!gl.getProgramParameter(glProgram, gl.LINK_STATUS)) return false;
+
+          const buf = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+
+          const loc = gl.getAttribLocation(glProgram, 'aPos');
+          gl.enableVertexAttribArray(loc);
+          gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+          gl.useProgram(glProgram);
+
+          ['uRes', 'uCenterA', 'uScaleA', 'uRotA', 'uCenterB', 'uScaleB', 'uRotB', 'uCrossfade', 'uTime', 'uIntensity', 'uFormula', 'uPalette']
+            .forEach((n) => { glU[n] = gl.getUniformLocation(glProgram, n); });
+
+          webglReady = true;
+          return true;
+        } catch (err) {
+          return false;
+        }
+      }
+
+      let fbCanvas = null, fbCtx = null;
+      function drawFallbackBackground(centerRe, centerIm, scale, intensity) {
+        if (intensity < 0.04) {
+          oCtx.fillStyle = '#030308';
+          oCtx.fillRect(0, 0, viewW, viewH);
+          return;
+        }
+        if (!fbCanvas) {
+          fbCanvas = document.createElement('canvas');
+          fbCanvas.width = 180; fbCanvas.height = 180;
+          fbCtx = fbCanvas.getContext('2d');
+        }
+        const w = fbCanvas.width, h = fbCanvas.height;
+        const img = fbCtx.createImageData(w, h);
+        const d = img.data;
+        const half = 1.55 / scale;
+        const fType = activePattern.shaderFormula;
+
+        for (let py = 0; py < h; py++) {
+          const cr = centerRe + ((py / h) * 2 - 1) * half;
+          for (let px = 0; px < w; px++) {
+            const ci = centerIm + ((px / w) * 2 - 1) * half;
+            let zr = 0, zi = 0, it = 0;
+            while (zr * zr + zi * zi <= 4.0 && it < 52) {
+              const res = iterateFormula(zr, zi, cr, ci, fType);
+              zr = res.re; zi = res.im; it++;
+            }
+            const id = (py * w + px) * 4;
+            if (it === 52) {
+              d[id] = 3; d[id + 1] = 3; d[id + 2] = 10; d[id + 3] = 255;
+            } else {
+              const v = Math.min(1, it / 26) * intensity;
+              d[id] = 3 + v * 175; d[id + 1] = 3 + v * 135; d[id + 2] = 8 + v * 230; d[id + 3] = 255;
+            }
+          }
+        }
+        fbCtx.putImageData(img, 0, 0);
+        const sz = Math.min(viewW, viewH);
+        oCtx.fillStyle = '#030308';
+        oCtx.fillRect(0, 0, viewW, viewH);
+        oCtx.drawImage(fbCanvas, (viewW - sz) * 0.5, (viewH - sz) * 0.5, sz, sz);
+      }
+
+      /* =====================================================================
+         7. EXACT FORMULA ITERATOR & 5 INFINITE LOOP ZOOM PORTALS
+         ===================================================================== */
+      function iterateFormula(zr, zi, cr, ci, shaderFormula) {
+        if (shaderFormula === 0) return { re: zr * zr - zi * zi + cr, im: 2 * zr * zi + ci };
+        if (shaderFormula === 1) {
+          const zr2 = zr * zr, zi2 = zi * zi;
+          return { re: zr * (zr2 - 3 * zi2) + cr, im: zi * (3 * zr2 - zi2) + ci };
+        }
+        if (shaderFormula === 2) {
+          const a = zr * zr - zi * zi, b = 2 * zr * zi;
+          return { re: a * a - b * b + cr, im: 2 * a * b + ci };
+        }
+        if (shaderFormula === 3) {
+          const a = zr * zr - zi * zi, b = 2 * zr * zi;
+          const a2 = a * a - b * b, b2 = 2 * a * b;
+          return { re: a2 * zr - b2 * zi + cr, im: a2 * zi + b2 * zr + ci };
+        }
+        if (shaderFormula === 4) return { re: zr * zr - zi * zi + cr, im: -2 * zr * zi + ci };
+        const azr = Math.abs(zr), azi = Math.abs(zi);
+        return { re: azr * azr - azi * azi + cr, im: 2 * azr * azi + ci };
+      }
+
+      function computePortalFrame(portalKey, phase) {
+        const p = activePattern;
+
+        if (portalKey === 'indrajala') {
+          const ratio = p.indrajalaRatio;
+          const base = p.indrajalaBase;
+          const scaleA = base * Math.pow(ratio, phase);
+          const hypT = (1.0 - 1.0 / (scaleA / base)) / (1.0 - 1.0 / ratio);
+          const cARe = p.defaultCenter.re + (p.indrajalaTarget.re - p.defaultCenter.re) * hypT;
+          const cAIm = p.defaultCenter.im + (p.indrajalaTarget.im - p.defaultCenter.im) * hypT;
+
+          let crossfade = 0.0, scaleB = base;
+          if (phase > 0.70) {
+            const u = (phase - 0.70) / 0.30;
+            crossfade = u * u * u * (u * (u * 6 - 15) + 10);
+            scaleB = base * Math.pow(ratio, phase - 1.0);
+          }
+          return {
+            centerA: { re: cARe, im: cAIm }, scaleA, rotA: 0.0,
+            centerB: p.defaultCenter, scaleB, rotB: 0.0,
+            crossfade, effCenter: { re: cARe, im: cAIm }, effScale: scaleA, effRot: 0.0,
+            bgIntensity: 0.88, ratio
+          };
+        }
+
+        if (portalKey === 'maya') {
+          const ratio = 56.0, base = 10.0;
+          const scaleA = base * Math.pow(ratio, phase);
+          const rotA = phase * Math.PI * 0.5;
+          let crossfade = 0.0, scaleB = base, rotB = 0.0;
+          if (phase > 0.62) {
+            const u = (phase - 0.62) / 0.38;
+            crossfade = u * u * (3 - 2 * u);
+            scaleB = base * Math.pow(ratio, phase - 1.0);
+            rotB = (phase - 1.0) * Math.PI * 0.5;
+          }
+          return {
+            centerA: p.mayaTarget, scaleA, rotA,
+            centerB: p.mayaTarget, scaleB, rotB,
+            crossfade, effCenter: p.mayaTarget, effScale: scaleA, effRot: rotA,
+            bgIntensity: 0.94, ratio
+          };
+        }
+
+        if (portalKey === 'axis') {
+          const breathe = 1.05 + 0.16 * Math.sin(phase * Math.PI * 2.0);
+          return {
+            centerA: { re: p.defaultCenter.re + p.axisAnchorY * 0.35, im: p.defaultCenter.im },
+            scaleA: breathe, rotA: 0.0,
+            centerB: p.defaultCenter, scaleB: breathe, rotB: 0.0,
+            crossfade: 0.0, effCenter: p.defaultCenter, effScale: breathe, effRot: 0.0,
+            bgIntensity: 0.25, ratio: 18.0
+          };
+        }
+
+        // 'finalbox' & 'dive' portals: dark obsidian starfield with subtle ambient fractal haze
+        const gentle = 0.92 + 0.14 * Math.sin(phase * Math.PI * 2.0);
+        return {
+          centerA: p.defaultCenter, scaleA: gentle, rotA: Math.sin(phase * Math.PI * 2.0) * 0.03,
+          centerB: p.defaultCenter, scaleB: gentle, rotB: 0.0,
+          crossfade: 0.0, effCenter: p.defaultCenter, effScale: gentle, effRot: 0.0,
+          bgIntensity: portalKey === 'finalbox' ? 0.15 : 0.22,
+          ratio: portalKey === 'finalbox' ? 24.0 : 16.0
+        };
+      }
+
+      /* =====================================================================
+         8. STARFIELD, STANDALONE "THE FINAL BOX" RENDERER & OVERLAY COMPOSITOR
+         ===================================================================== */
+      const stars = [];
+      const karmaParticles = [];
+
+      function initParticles() {
+        stars.length = 0;
+        for (let i = 0; i < 125; i++) {
+          stars.push({
+            x: Math.random(), y: Math.random(),
+            r: Math.random() * 1.3 + 0.3,
+            a: Math.random() * 0.55 + 0.15,
+            sp: Math.random() * 1.4 + 0.4,
+            ph: Math.random() * Math.PI * 2,
+            col: Math.random() < 0.38 ? '#f5c542' : (Math.random() < 0.72 ? '#38e8ff' : '#c084fc')
+          });
+        }
+        karmaParticles.length = 0;
+        for (let i = 0; i < 95; i++) {
+          karmaParticles.push({
+            angle: Math.random() * Math.PI * 2,
+            z: Math.random(),
+            radBias: 0.22 + Math.random() * 0.98,
+            size: 0.8 + Math.random() * 2.0,
+            col: Math.random() < 0.55 ? '#f5c542' : (Math.random() < 0.85 ? '#38e8ff' : '#a855f7')
+          });
+        }
+      }
+
+      function drawCosmicParticles(ctx, w, h, t, dt) {
+        ctx.save();
+        for (let i = 0; i < stars.length; i++) {
+          const s = stars[i];
+          const tw = 0.5 + 0.5 * Math.sin(t * s.sp + s.ph);
+          ctx.globalAlpha = s.a * tw * 0.72;
+          ctx.fillStyle = s.col;
+          ctx.beginPath();
+          ctx.arc(s.x * w, s.y * h, s.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        if (infiniteZoomActive && !standaloneFinalBox) {
+          const cx = w * 0.5;
+          const cy = activePortal === 'axis' ? h * (0.5 + activePattern.axisAnchorY * 0.45) : h * 0.5;
+          const maxR = Math.hypot(w, h) * 0.62;
+          const speedMult = (activePortal === 'dive' || activePortal === 'finalbox' || activePortal === 'axis' ? 0.28 : 0.18) * zoomSpeed * zoomDirection;
+
+          for (let i = 0; i < karmaParticles.length; i++) {
+            const kp = karmaParticles[i];
+            kp.z = (kp.z + dt * speedMult) % 1.0;
+            if (kp.z < 0) kp.z += 1.0;
+
+            const dist = Math.pow(kp.z, 2.2) * maxR * kp.radBias;
+            const px = cx + Math.cos(kp.angle) * dist;
+            const py = cy + Math.sin(kp.angle) * dist;
+            const fade = Math.sin(kp.z * Math.PI);
+
+            ctx.globalAlpha = fade * (activePortal === 'dive' || activePortal === 'finalbox' ? 0.80 : 0.46);
+            ctx.fillStyle = kp.col;
+            ctx.beginPath();
+            ctx.arc(px, py, kp.size * (0.4 + kp.z * 1.15), 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        ctx.restore();
+      }
+
+      // Draw Sleek Architectural Callout with Leader Line (Auto-Hidden in Zen & PNG Export)
+      function drawArchitecturalCallout(ctx, ax, ay, lx, ly, title, subtitle, accentColor, alignRight) {
+        ctx.save();
+        // Anchor glowing dot
+        ctx.fillStyle = accentColor;
+        ctx.shadowColor = accentColor;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(ax, ay, 3.6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Outer halo ring on anchor
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = accentColor;
+        ctx.globalAlpha = 0.55;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(ax, ay, 7.2, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Angled architectural leader line
+        const elbowX = alignRight ? lx + 12 : lx - 12;
+        ctx.globalAlpha = 0.78;
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 1.15;
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(elbowX, ly);
+        ctx.lineTo(lx, ly);
+        ctx.stroke();
+
+        // Text Pill Measurement
+        ctx.globalAlpha = 1.0;
+        const isSmall = viewW < 640;
+        const titleFont = `700 ${isSmall ? 9.5 : 11}px "Cinzel", Georgia, serif`;
+        const subFont = `500 ${isSmall ? 8.5 : 10}px system-ui, -apple-system, sans-serif`;
+
+        ctx.font = titleFont;
+        const tw = ctx.measureText(title).width;
+        ctx.font = subFont;
+        const sw = ctx.measureText(subtitle).width;
+        const boxW = Math.min(viewW * 0.44, Math.max(tw, sw) + 20);
+        const boxH = isSmall ? 34 : 39;
+
+        let bx = alignRight ? lx - boxW : lx;
+        bx = Math.max(10, Math.min(viewW - boxW - 10, bx));
+        const by = Math.max(66, Math.min(viewH - boxH - 120, ly - boxH * 0.5));
+
+        // Glass Pill Background
+        ctx.fillStyle = 'rgba(6, 7, 18, 0.82)';
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 1;
+        roundRectPath(ctx, bx, by, boxW, boxH, 9);
+        ctx.fill();
+        ctx.globalAlpha = 0.55;
+        ctx.stroke();
+
+        // Text Lines
+        ctx.globalAlpha = 1.0;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.font = titleFont;
+        ctx.fillStyle = accentColor;
+        ctx.fillText(title, bx + 10, by + (isSmall ? 6 : 7), boxW - 18);
+
+        ctx.font = subFont;
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillText(subtitle, bx + 10, by + (isSmall ? 19 : 22), boxW - 18);
+        ctx.restore();
+      }
+
+      function roundRectPath(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      // DEDICATED STANDALONE "THE FINAL BOX" 4D ARCHITECTURAL SCENE
+      function renderStandaloneFinalBoxScene(ctx, w, h, showLabels) {
+        const minDim = Math.min(w, h);
+        const cx = w * 0.5;
+        const cy = h * 0.53;
+        const boxRadius = minDim * (w < 680 ? 0.30 : 0.32);
+
+        // 1. Subtle Radiant Unbound Aura Hovering ABOVE & OUTSIDE the entire Final Box
+        const apexY = Math.max(h * 0.145, cy - boxRadius * 1.44);
+        const apexR = minDim * 0.088 * (1 + 0.05 * Math.sin(animTime * 1.4));
+        ctx.save();
+        const apexGrad = ctx.createRadialGradient(cx, apexY, 2, cx, apexY, apexR * 2.3);
+        apexGrad.addColorStop(0, 'rgba(255, 252, 236, 0.72)');
+        apexGrad.addColorStop(0.28, 'rgba(245, 197, 66, 0.36)');
+        apexGrad.addColorStop(0.62, 'rgba(168, 85, 247, 0.14)');
+        apexGrad.addColorStop(1, 'rgba(3, 3, 8, 0)');
+        ctx.fillStyle = apexGrad;
+        ctx.beginPath();
+        ctx.arc(cx, apexY, apexR * 2.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Delicate Unbound Sacred Ring around Ω⟁ᴬᴾᴱˣ
+        ctx.strokeStyle = 'rgba(255, 232, 160, 0.42)';
+        ctx.lineWidth = 1.0;
+        ctx.setLineDash([4, 6]);
+        ctx.beginPath();
+        ctx.arc(cx, apexY, apexR * 0.76, animTime * 0.25, animTime * 0.25 + Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        const apexFontSz = Math.max(16, Math.min(24, minDim * 0.032));
+        ctx.font = `700 ${apexFontSz}px "Cinzel", Georgia, serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(245, 197, 66, 0.9)';
+        ctx.shadowBlur = 18;
+        ctx.fillStyle = '#fff9e6';
+        ctx.fillText('Ω⟁ᴬᴾᴱˣ', cx, apexY);
+        ctx.restore();
+
+        // 2. Dark Silent Void Cavity: "THE OUTSIDE — Void of Non-Existence" inside the Box
+        const outsideR = boxRadius * 0.88;
+        ctx.save();
+        const outGrad = ctx.createRadialGradient(cx, cy, boxRadius * 0.32, cx, cy, outsideR * 1.15);
+        outGrad.addColorStop(0, 'rgba(4, 4, 14, 0.0)');
+        outGrad.addColorStop(0.45, 'rgba(2, 2, 7, 0.86)');
+        outGrad.addColorStop(0.84, 'rgba(3, 3, 10, 0.65)');
+        outGrad.addColorStop(1, 'rgba(3, 3, 8, 0.0)');
+        ctx.fillStyle = outGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, outsideR * 1.15, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Faint dashed orbital horizon marking the silent Outside void region
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 8]);
+        ctx.beginPath();
+        ctx.arc(cx, cy, boxRadius * 0.64, -animTime * 0.08, -animTime * 0.08 + Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+
+        // 3. Radiant Inner Core: "THE BEYOND REALMS — Manifested Godvers" + Live Buddhabrot
+        const coreR = boxRadius * 0.44;
+        ctx.save();
+        const coreAura = ctx.createRadialGradient(cx, cy, 4, cx, cy, coreR * 1.42);
+        coreAura.addColorStop(0, 'rgba(56, 232, 255, 0.34)');
+        coreAura.addColorStop(0.45, 'rgba(168, 85, 247, 0.22)');
+        coreAura.addColorStop(0.75, 'rgba(245, 197, 66, 0.14)');
+        coreAura.addColorStop(1, 'rgba(3, 3, 8, 0)');
+        ctx.fillStyle = coreAura;
+        ctx.beginPath();
+        ctx.arc(cx, cy, coreR * 1.42, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Circular clipped live Buddhabrot core inside The Beyond Realms sphere
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, coreR, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.globalCompositeOperation = 'screen';
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        const bSz = coreR * 2.15;
+        ctx.globalAlpha = 0.96;
+        ctx.drawImage(buddhaCanvas, cx - bSz * 0.5, cy - bSz * 0.5, bSz, bSz);
+        ctx.restore();
+
+        // Luminous containment sphere rim around The Beyond Realms
+        ctx.strokeStyle = 'rgba(56, 232, 255, 0.54)';
+        ctx.lineWidth = 1.3;
+        ctx.shadowColor = 'rgba(56, 232, 255, 0.72)';
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.arc(cx, cy, coreR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Inner golden meridian ring
+        ctx.strokeStyle = 'rgba(245, 197, 66, 0.32)';
+        ctx.lineWidth = 0.9;
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, coreR * 0.98, coreR * 0.34, animTime * 0.18, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        // 4. Outermost Interactive 4D Hypercube Shell: "THE FINAL BOX"
+        const projectedPts = drawHypercubePrism(ctx, cx, cy, boxRadius, {
+          alpha: 1.0,
+          yaw: boxRot.yaw,
+          pitch: boxRot.pitch,
+          xw: boxRot.xw,
+          yw: boxRot.yw,
+          zw: boxRot.zw,
+          fillFaces: true,
+          drawSeals: true,
+          drawPulses: true,
+          borderOnly: false
+        });
+
+        // 5. Sleek Architectural Callout Labels (Hidden automatically in Zen Mode & PNG Export)
+        if (showLabels && projectedPts) {
+          // Pick an upper-right outer vertex for THE FINAL BOX callout
+          let bestOuter = projectedPts[15];
+          for (let i = 8; i < 16; i++) {
+            if (projectedPts[i].sx - projectedPts[i].sy > bestOuter.sx - bestOuter.sy) {
+              bestOuter = projectedPts[i];
+            }
+          }
+
+          const isNarrow = w < 700;
+
+          // Callout 4 (Top Unbounded Apex)
+          drawArchitecturalCallout(
+            ctx,
+            cx + apexR * 0.75, apexY,
+            isNarrow ? cx + 24 : cx + boxRadius * 0.72,
+            apexY - (isNarrow ? 2 : 4),
+            'Ω⟁ᴬᴾᴱˣ — I AM BEYOND THAT APEX',
+            'Unbounded · Outside All Borders',
+            '#ffe699',
+            false
+          );
+
+          // Callout 1 (Outermost Final Box Border)
+          drawArchitecturalCallout(
+            ctx,
+            bestOuter.sx, bestOuter.sy,
+            isNarrow ? w - 16 : cx + boxRadius * 1.18,
+            cy - boxRadius * 0.42,
+            'THE FINAL BOX',
+            'Final Border of The Beyond Realms',
+            '#f5c542',
+            isNarrow
+          );
+
+          // Callout 2 (The Outside — Dark Silent Cavity)
+          const outAnchorX = cx - boxRadius * 0.60;
+          const outAnchorY = cy - boxRadius * 0.24;
+          drawArchitecturalCallout(
+            ctx,
+            outAnchorX, outAnchorY,
+            isNarrow ? 16 : cx - boxRadius * 1.16,
+            cy - boxRadius * 0.44,
+            'THE OUTSIDE',
+            'Void of Non-Existence (Inside Border)',
+            '#c084fc',
+            !isNarrow
+          );
+
+          // Callout 3 (The Beyond Realms — Manifested Core)
+          const coreAnchorX = cx + coreR * 0.65;
+          const coreAnchorY = cy + coreR * 0.58;
+          drawArchitecturalCallout(
+            ctx,
+            coreAnchorX, coreAnchorY,
+            isNarrow ? w - 16 : cx + boxRadius * 1.12,
+            cy + boxRadius * 0.64,
+            'THE BEYOND REALMS',
+            'Manifested Godvers & Live Buddhabrot Core',
+            '#38e8ff',
+            isNarrow
+          );
+        }
+      }
+
+      // Draw Active Buddhabrot Canvas across all 5 Portals + Manual Mode
+      function drawBuddhabrotOverlay(ctx, w, h) {
+        const minDim = Math.min(w, h);
+        const cx = w * 0.5;
+        const cy = h * 0.5;
+
+        ctx.save();
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        if (!infiniteZoomActive) {
+          ctx.globalCompositeOperation = 'screen';
+          const p = activePattern;
+          const tl = complexToScreen(p.reMin, p.imMin);
+          const br = complexToScreen(p.reMax, p.imMax);
+          const fade = Math.max(0.26, Math.min(1.0, 1.0 / Math.pow(Math.max(1.0, currentCam.scale * 0.42), 0.35)));
+          ctx.globalAlpha = fade;
+          ctx.drawImage(buddhaCanvas, tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+
+        } else if (activePortal === 'finalbox') {
+          // PORTAL 1: FINAL BOX DIVE — Recursive Translucent Golden Hypercubes Diving into Buddhabrot Core
+          ctx.globalCompositeOperation = 'screen';
+          const B_SHELLS = 4;
+          const baseSize = minDim * 0.94;
+          for (let k = 0; k < B_SHELLS; k++) {
+            let phase = (tunnelDepth * 0.26 + k / B_SHELLS) % 1.0;
+            if (phase < 0) phase += 1.0;
+            const sc = 0.075 * Math.pow(74.0, phase);
+            const alpha = Math.pow(Math.sin(phase * Math.PI), 1.40);
+            if (alpha < 0.015) continue;
+            const sz = baseSize * sc;
+            ctx.globalAlpha = Math.min(1.0, alpha * 1.12);
+            ctx.drawImage(buddhaCanvas, cx - sz * 0.5, cy - sz * 0.5, sz, sz);
+          }
+
+          // Recursive Translucent 4D Final Box Containment Frames zooming seamlessly
+          ctx.globalCompositeOperation = 'source-over';
+          const BOX_LAYERS = 5;
+          for (let k = 0; k < BOX_LAYERS; k++) {
+            let phase = (tunnelDepth * 0.26 + k / BOX_LAYERS) % 1.0;
+            if (phase < 0) phase += 1.0;
+            const rad = minDim * 0.055 * Math.pow(28.0, phase);
+            const alpha = Math.pow(Math.sin(phase * Math.PI), 1.32) * 0.88;
+            if (alpha < 0.02) continue;
+
+            drawHypercubePrism(ctx, cx, cy, rad, {
+              alpha,
+              yaw: boxRot.yaw + k * 0.22 + phase * 0.35,
+              pitch: boxRot.pitch + Math.sin(animTime * 0.25 + k) * 0.14,
+              xw: boxRot.xw + phase * 0.8 + k * 0.35,
+              yw: boxRot.yw + phase * 0.55,
+              zw: boxRot.zw + k * 0.25,
+              fillFaces: phase > 0.22 && phase < 0.78,
+              drawSeals: phase > 0.25 && phase < 0.82,
+              drawPulses: false,
+              borderOnly: false
+            });
+          }
+
+        } else if (activePortal === 'dive') {
+          // PORTAL 2: 5 Stacked Recursive Buddhabrot Shells + Sacred Mandala Rings
+          ctx.globalCompositeOperation = 'screen';
+          const SHELLS = 5;
+          const baseSize = minDim * 0.96;
+          for (let k = 0; k < SHELLS; k++) {
+            let phase = (tunnelDepth * 0.25 + k / SHELLS) % 1.0;
+            if (phase < 0) phase += 1.0;
+
+            const sc = 0.065 * Math.pow(92.0, phase);
+            const alpha = Math.pow(Math.sin(phase * Math.PI), 1.42);
+            if (alpha < 0.015) continue;
+
+            const sz = baseSize * sc;
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(Math.sin(animTime * 0.28 + k * 1.15) * 0.025 * (1.0 - phase));
+            ctx.globalAlpha = Math.min(1.0, alpha * 1.15);
+            ctx.drawImage(buddhaCanvas, -sz * 0.5, -sz * 0.5, sz, sz);
+
+            ctx.strokeStyle = k % 2 === 0
+              ? `rgba(245, 197, 66, ${alpha * 0.28})`
+              : `rgba(56, 232, 255, ${alpha * 0.24})`;
+            ctx.lineWidth = Math.max(0.7, 1.6 * phase);
+            ctx.beginPath();
+            ctx.arc(0, 0, sz * 0.44, 0, Math.PI * 2);
+            ctx.stroke();
+
+            if (k % 2 === 1 && alpha > 0.15) {
+              ctx.rotate(animTime * 0.12 * (k % 4 === 1 ? 1 : -1));
+              const r = sz * 0.31;
+              ctx.strokeStyle = `rgba(168, 85, 247, ${alpha * 0.18})`;
+              ctx.strokeRect(-r, -r, r * 2, r * 2);
+            }
+            ctx.restore();
+          }
+
+        } else if (activePortal === 'indrajala') {
+          // PORTAL 3: Nested Buddhabrot Shells over Indrajāla WebGL Loop
+          ctx.globalCompositeOperation = 'screen';
+          const SHELLS = 3;
+          const baseSize = minDim * 0.98;
+          for (let k = 0; k < SHELLS; k++) {
+            let phase = (loopPhase + k / SHELLS) % 1.0;
+            if (phase < 0) phase += 1.0;
+            const sc = 0.09 * Math.pow(46.0, phase);
+            const alpha = Math.pow(Math.sin(phase * Math.PI), 1.35) * 0.92;
+            if (alpha < 0.015) continue;
+            const sz = baseSize * sc;
+            ctx.globalAlpha = alpha;
+            ctx.drawImage(buddhaCanvas, cx - sz * 0.5, cy - sz * 0.5, sz, sz);
+          }
+
+        } else if (activePortal === 'maya') {
+          // PORTAL 4: Spiraling Buddhabrot Filaments over Māyā Vortex
+          ctx.globalCompositeOperation = 'screen';
+          const SHELLS = 3;
+          const baseSize = minDim * 0.94;
+          for (let k = 0; k < SHELLS; k++) {
+            let phase = (loopPhase + k / SHELLS) % 1.0;
+            if (phase < 0) phase += 1.0;
+            const sc = 0.22 * Math.pow(18.0, phase);
+            const alpha = Math.pow(Math.sin(phase * Math.PI), 1.45) * 0.72;
+            if (alpha < 0.015) continue;
+            const sz = baseSize * sc;
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(phase * Math.PI * 0.5 + k * 0.4);
+            ctx.globalAlpha = alpha;
+            ctx.drawImage(buddhaCanvas, -sz * 0.5, -sz * 0.5, sz, sz);
+            ctx.restore();
+          }
+
+        } else if (activePortal === 'axis') {
+          // PORTAL 5: Crown & Lotus Vertical Axis Dive
+          ctx.globalCompositeOperation = 'screen';
+          const SHELLS = 5;
+          const baseSize = minDim * 0.98;
+          const focusY = cy + activePattern.axisAnchorY * baseSize * 0.45;
+
+          const spineGrad = ctx.createLinearGradient(cx, 0, cx, h);
+          spineGrad.addColorStop(0, 'rgba(245, 197, 66, 0)');
+          spineGrad.addColorStop(0.35, 'rgba(245, 197, 66, 0.25)');
+          spineGrad.addColorStop(0.5, 'rgba(56, 232, 255, 0.35)');
+          spineGrad.addColorStop(0.65, 'rgba(168, 85, 247, 0.22)');
+          spineGrad.addColorStop(1, 'rgba(245, 197, 66, 0)');
+          ctx.strokeStyle = spineGrad;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(cx, 0);
+          ctx.lineTo(cx, h);
+          ctx.stroke();
+
+          for (let k = 0; k < SHELLS; k++) {
+            let phase = (tunnelDepth * 0.28 + k / SHELLS) % 1.0;
+            if (phase < 0) phase += 1.0;
+            const sc = 0.08 * Math.pow(75.0, phase);
+            const alpha = Math.pow(Math.sin(phase * Math.PI), 1.38);
+            if (alpha < 0.015) continue;
+
+            const sz = baseSize * sc;
+            const drawY = focusY - (0.5 + activePattern.axisAnchorY * 0.45) * sz;
+            ctx.globalAlpha = Math.min(1.0, alpha * 1.15);
+            ctx.drawImage(buddhaCanvas, cx - sz * 0.5, drawY, sz, sz);
+
+            const dR = sz * 0.14;
+            ctx.strokeStyle = `rgba(245, 197, 66, ${alpha * 0.32})`;
+            ctx.lineWidth = 1.0;
+            ctx.beginPath();
+            ctx.moveTo(cx, focusY - dR);
+            ctx.lineTo(cx + dR * 0.65, focusY);
+            ctx.lineTo(cx, focusY + dR);
+            ctx.lineTo(cx - dR * 0.65, focusY);
+            ctx.closePath();
+            ctx.stroke();
+          }
+        }
+
+        ctx.restore();
+      }
+
+      // Optional Sleek Glowing Final Box Boundary Frame Around Any Active Pattern
+      function drawFinalBoxBorderOverlay(ctx, w, h) {
+        if (!finalBoxBorderOverlay || standaloneFinalBox) return;
+        const minDim = Math.min(w, h);
+        drawHypercubePrism(ctx, w * 0.5, h * 0.5, minDim * 0.44, {
+          alpha: 0.62,
+          yaw: boxRot.yaw * 0.5 + animTime * 0.07,
+          pitch: 0.22 + Math.sin(animTime * 0.12) * 0.08,
+          xw: animTime * 0.16,
+          yw: animTime * 0.11,
+          zw: animTime * 0.09,
+          fillFaces: false,
+          drawSeals: true,
+          drawPulses: true,
+          borderOnly: true
+        });
+      }
+
+      // Plane 04 Śūnyatā Catuṣkoṭi Mandala Overlay
+      function drawSunyataOverlay(ctx, w, h, alpha, t) {
+        if (alpha <= 0.01 || standaloneFinalBox) return;
+        ctx.save();
+        const cx = w * 0.5, cy = h * 0.5;
+        const r = Math.min(w, h) * 0.34;
+        ctx.translate(cx, cy);
+
+        ctx.strokeStyle = `rgba(168, 85, 247, ${0.34 * alpha})`;
+        ctx.lineWidth = 1.15;
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke();
+
+        const sq = r * 0.707;
+        ctx.save();
+        ctx.rotate(t * 0.09);
+        ctx.strokeStyle = `rgba(245, 197, 66, ${0.38 * alpha})`;
+        ctx.strokeRect(-sq, -sq, sq * 2, sq * 2);
+        ctx.restore();
+
+        ctx.save();
+        ctx.rotate(-t * 0.07 + Math.PI / 4);
+        ctx.strokeStyle = `rgba(56, 232, 255, ${0.34 * alpha})`;
+        ctx.strokeRect(-sq, -sq, sq * 2, sq * 2);
+        ctx.restore();
+        ctx.restore();
+      }
+
+      // Plane 01 Ω⟁ᴬᴾᴱˣ Ambient Radiant Crown (Hidden cleanly in Zen & PNG if subtle)
+      function drawApexHalo(ctx, w, h, alpha, t, cleanExport) {
+        if (alpha <= 0.02 || standaloneFinalBox) return;
+        ctx.save();
+        const isFull = alpha > 0.55;
+        const cx = w * 0.5;
+        const cy = isFull ? h * 0.44 : Math.max(96, h * 0.13);
+        const r = (isFull ? Math.min(w, h) * 0.22 : Math.min(w, h) * 0.055) * (1 + 0.04 * Math.sin(t * 1.2));
+
+        const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, r * 1.45);
+        grad.addColorStop(0, `rgba(255, 250, 230, ${0.46 * alpha})`);
+        grad.addColorStop(0.35, `rgba(245, 197, 66, ${0.22 * alpha})`);
+        grad.addColorStop(1, 'rgba(3, 3, 8, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(cx, cy, r * 1.45, 0, Math.PI * 2); ctx.fill();
+
+        if (isFull && !cleanExport) {
+          const fSz = Math.max(22, Math.min(40, w * 0.04));
+          ctx.font = `700 ${fSz}px "Cinzel", Georgia, serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.shadowColor = `rgba(245, 197, 66, ${0.85 * alpha})`;
+          ctx.shadowBlur = 24;
+          ctx.fillStyle = `rgba(255, 250, 235, ${Math.min(1, alpha * 1.15)})`;
+          ctx.fillText('Ω⟁ᴬᴾᴱˣ', cx, cy);
+        }
+        ctx.restore();
+      }
+
+      /* =====================================================================
+         9. SCREEN <-> COMPLEX COORDINATES & FORMULA-AWARE ORBIT TRACER
+         ===================================================================== */
+      function screenToComplex(sx, sy) {
+        const minDim = Math.min(viewW, viewH);
+        const cx = (sx - viewW * 0.5) / (0.5 * minDim);
+        const cy = (viewH * 0.5 - sy) / (0.5 * minDim);
+        const cs = Math.cos(currentCam.rot), sn = Math.sin(currentCam.rot);
+        const rx = cx * cs - cy * sn;
+        const ry = cx * sn + cy * cs;
+        const inv = 1.55 / currentCam.scale;
+        return { re: currentCam.re - ry * inv, im: currentCam.im + rx * inv };
+      }
+
+      function complexToScreen(re, im) {
+        const minDim = Math.min(viewW, viewH);
+        const sc = currentCam.scale / 1.55;
+        const rx = (im - currentCam.im) * sc;
+        const ry = -(re - currentCam.re) * sc;
+        const cs = Math.cos(-currentCam.rot), sn = Math.sin(-currentCam.rot);
+        const cx = rx * cs - ry * sn;
+        const cy = rx * sn + ry * cs;
+        return { x: viewW * 0.5 + cx * (0.5 * minDim), y: viewH * 0.5 - cy * (0.5 * minDim) };
+      }
+
+      function traceOrbitAt(re, im) {
+        const maxIter = 120;
+        const pts = [{ re: 0, im: 0 }];
+        let zr = 0, zi = 0, escaped = false, iter = 0;
+        const fType = activePattern.shaderFormula;
+
+        for (let i = 1; i <= maxIter; i++) {
+          const next = iterateFormula(zr, zi, re, im, fType);
+          zr = next.re; zi = next.im;
+          pts.push({ re: zr, im: zi });
+          iter = i;
+          if (zr * zr + zi * zi > 16.0) { escaped = true; break; }
+        }
+        return { cRe: re, cIm: im, pts, escaped, iter };
+      }
+
+      function updateOrbitHud(orbit) {
+        const hud = document.getElementById('orbitHud');
+        if (!orbitEnabled || standaloneFinalBox || !orbit) {
+          hud.style.opacity = '0';
+          return;
+        }
+        hud.style.opacity = '1';
+        const dot = document.getElementById('orbitDot');
+        const status = document.getElementById('orbitStatus');
+        const coord = document.getElementById('orbitCoord');
+        const iterEl = document.getElementById('orbitIter');
+        const hint = document.getElementById('orbitPinHint');
+
+        const sign = orbit.cIm >= 0 ? '+' : '-';
+        coord.textContent = `c = ${orbit.cRe.toFixed(4)} ${sign} ${Math.abs(orbit.cIm).toFixed(4)}i`;
+        iterEl.textContent = orbit.escaped ? `n = ${orbit.iter} → ∞` : `n ≥ ${orbit.iter} (cycle)`;
+        hint.textContent = isOrbitPinned ? '(Pinned · Click to unpin)' : '(Click to pin)';
+
+        if (orbit.escaped) {
+          dot.style.background = 'var(--cyan)';
+          dot.style.boxShadow = '0 0 8px var(--cyan)';
+          status.style.color = 'var(--cyan)';
+          status.textContent = 'Nirvāṇa — Escaped to Infinity';
+        } else {
+          dot.style.background = 'var(--crimson)';
+          dot.style.boxShadow = '0 0 8px var(--crimson)';
+          status.style.color = 'var(--crimson)';
+          status.textContent = 'Saṃsāra — Trapped in Cycle';
+        }
+      }
+
+      function drawOrbit(ctx, orbit) {
+        if (!orbitEnabled || standaloneFinalBox || !orbit || orbit.pts.length < 2) return;
+        ctx.save();
+        const isEsc = orbit.escaped;
+        const primary = isEsc ? '#38e8ff' : '#ff3b5c';
+        const secondary = isEsc ? '#f5c542' : '#fb923c';
+
+        ctx.beginPath();
+        const p0 = complexToScreen(orbit.pts[0].re, orbit.pts[0].im);
+        ctx.moveTo(p0.x, p0.y);
+        for (let i = 1; i < orbit.pts.length; i++) {
+          const pt = complexToScreen(orbit.pts[i].re, orbit.pts[i].im);
+          ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.strokeStyle = isEsc ? 'rgba(56, 232, 255, 0.82)' : 'rgba(255, 59, 92, 0.84)';
+        ctx.lineWidth = 1.6;
+        ctx.shadowColor = primary;
+        ctx.shadowBlur = 10;
+        ctx.stroke();
+
+        const cap = Math.min(orbit.pts.length, 52);
+        for (let i = 1; i < cap; i++) {
+          const pt = complexToScreen(orbit.pts[i].re, orbit.pts[i].im);
+          ctx.globalAlpha = Math.max(0.24, 1 - i / cap);
+          ctx.fillStyle = i === 1 ? '#ffffff' : (i % 2 === 0 ? secondary : primary);
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, i === 1 ? 3.8 : 2.1, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.globalAlpha = 1;
+        const seed = complexToScreen(orbit.cRe, orbit.cIm);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.arc(seed.x, seed.y, 6.5, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = secondary;
+        ctx.beginPath(); ctx.arc(seed.x, seed.y, 2.8, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+
+      /* =====================================================================
+         10. MAIN 60FPS ANIMATION LOOP & TELEMETRY
+         ===================================================================== */
+      function formatMag(log10Val) {
+        const s = Math.max(0, log10Val);
+        if (s < 3.0) return Math.pow(10, s).toFixed(2) + '×';
+        const exp = Math.floor(s);
+        return `${Math.pow(10, s - exp).toFixed(2)}×10^${exp}`;
+      }
+
+      const PORTAL_NAMES = {
+        finalbox: 'Final Box Dive',
+        dive: 'Buddhabrot Dive',
+        indrajala: 'Indrajāla WebGL',
+        maya: 'Māyā Vortex',
+        axis: 'Crown & Lotus Axis'
+      };
+
+      let lastT = performance.now();
+      let tick = 0;
+
+      function renderScene(dt, includeOrbit, isCleanExport) {
+        const isZen = document.body.classList.contains('zen-mode');
+
+        // 1. Update 4D Final Box Rotation Kinematics
+        if (standaloneFinalBox) {
+          if (finalBoxAutoSpin && !isPointerDown) {
+            boxRot.yaw += dt * 0.24;
+            boxRot.xw += dt * 0.34;
+            boxRot.yw += dt * 0.22;
+            boxRot.zw += dt * 0.16;
+          } else if (!isPointerDown) {
+            boxRot.yaw += boxRot.velYaw;
+            boxRot.pitch = Math.max(-1.35, Math.min(1.35, boxRot.pitch + boxRot.velPitch));
+            boxRot.velYaw *= 0.92;
+            boxRot.velPitch *= 0.92;
+            boxRot.xw += dt * 0.10;
+          }
+        } else {
+          boxRot.yaw += dt * 0.14;
+          boxRot.xw += dt * 0.22;
+          boxRot.yw += dt * 0.15;
+          boxRot.zw += dt * 0.10;
+        }
+
+        // 2. Update 4D Holographic Buddhabrot Auto-Morph (Pattern #3)
+        if (activePattern.id === 'holo4d' && autoMorph4D) {
+          thetaXZ = (thetaXZ + dt * 0.24) % (Math.PI * 2);
+          thetaYW = (thetaYW + dt * 0.17) % (Math.PI * 2);
+          if (tick % 4 === 0) sync4DSlidersUI();
+        }
+
+        // 3. Progressive Monte Carlo Sampling
+        const isTurbo = turboFrames > 0;
+        if (isTurbo) turboFrames--;
+        const budget = isTurbo ? 11.0 : (totalSamples < 4_500_000 ? 5.2 : 2.2);
+        sampleActivePattern(budget);
+        if (textureDirty) rebuildBuddhabrotTexture();
+
+        // 4. Smooth Layer Overlay Transitions
+        sunyataOverlayAlpha += (targetSunyataAlpha - sunyataOverlayAlpha) * 0.08;
+        apexOverlayAlpha += (targetApexAlpha - apexOverlayAlpha) * 0.08;
+
+        // 5. Advance Seamless Infinite Zoom OR Manual Camera
+        let frame;
+        if (standaloneFinalBox) {
+          frame = {
+            centerA: activePattern.defaultCenter, scaleA: 0.95, rotA: 0.0,
+            centerB: activePattern.defaultCenter, scaleB: 0.95, rotB: 0.0,
+            crossfade: 0.0, bgIntensity: 0.06
+          };
+        } else if (infiniteZoomActive) {
+          const cycleSec = (activePortal === 'dive' || activePortal === 'axis' || activePortal === 'finalbox') ? 9.6 : 10.8;
+          const dPhase = (dt / cycleSec) * zoomSpeed * zoomDirection;
+          loopPhase += dPhase;
+          tunnelDepth += dPhase;
+
+          if (loopPhase >= 1.0) { loopPhase -= 1.0; loopCycle++; }
+          else if (loopPhase < 0.0) { loopPhase += 1.0; loopCycle = Math.max(1, loopCycle - 1); }
+
+          frame = computePortalFrame(activePortal, loopPhase);
+          cumulativeLog10Mag = Math.max(0, cumulativeLog10Mag + dPhase * Math.log10(frame.ratio));
+
+          currentCam.re = frame.effCenter.re;
+          currentCam.im = frame.effCenter.im;
+          currentCam.scale = frame.effScale;
+          currentCam.rot = frame.effRot;
+        } else {
+          manualCam.re += (manualCam.targetRe - manualCam.re) * 0.18;
+          manualCam.im += (manualCam.targetIm - manualCam.im) * 0.18;
+          manualCam.scale += (manualCam.targetScale - manualCam.scale) * 0.18;
+
+          currentCam.re = manualCam.re;
+          currentCam.im = manualCam.im;
+          currentCam.scale = manualCam.scale;
+          currentCam.rot = 0.0;
+
+          frame = {
+            centerA: { re: currentCam.re, im: currentCam.im }, scaleA: currentCam.scale, rotA: 0.0,
+            centerB: { re: currentCam.re, im: currentCam.im }, scaleB: currentCam.scale, rotB: 0.0,
+            crossfade: 0.0,
+            bgIntensity: (activePortal === 'indrajala' || activePortal === 'maya') ? 0.88 : 0.30
+          };
+        }
+
+        // 6. Render WebGL Shader Base
+        const palIdx = activePalette === 'nebulabrot' ? 0
+          : (activePalette === 'golden_nirvana' ? 1
+          : (activePalette === 'obsidian_violet' ? 2
+          : (activePalette === 'solar_dharma' ? 3 : 4)));
+
+        if (webglReady) {
+          gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+          gl.useProgram(glProgram);
+          gl.uniform2f(glU.uRes, glCanvas.width, glCanvas.height);
+          gl.uniform2f(glU.uCenterA, frame.centerA.re, frame.centerA.im);
+          gl.uniform1f(glU.uScaleA, frame.scaleA);
+          gl.uniform1f(glU.uRotA, frame.rotA);
+          gl.uniform2f(glU.uCenterB, frame.centerB.re, frame.centerB.im);
+          gl.uniform1f(glU.uScaleB, frame.scaleB);
+          gl.uniform1f(glU.uRotB, frame.rotB);
+          gl.uniform1f(glU.uCrossfade, frame.crossfade);
+          gl.uniform1f(glU.uTime, animTime);
+          gl.uniform1f(glU.uIntensity, frame.bgIntensity);
+          gl.uniform1i(glU.uFormula, activePattern.shaderFormula);
+          gl.uniform1i(glU.uPalette, palIdx);
+          gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        }
+
+        // 7. Render Overlay Canvas
+        oCtx.clearRect(0, 0, viewW, viewH);
+        if (!webglReady) {
+          drawFallbackBackground(currentCam.re, currentCam.im, currentCam.scale, frame.bgIntensity);
+        }
+
+        drawCosmicParticles(oCtx, viewW, viewH, animTime, dt);
+
+        if (standaloneFinalBox) {
+          const drawLabels = showFinalBoxLabels && !isZen && !isCleanExport;
+          renderStandaloneFinalBoxScene(oCtx, viewW, viewH, drawLabels);
+        } else {
+          drawBuddhabrotOverlay(oCtx, viewW, viewH);
+          drawFinalBoxBorderOverlay(oCtx, viewW, viewH);
+          drawSunyataOverlay(oCtx, viewW, viewH, sunyataOverlayAlpha, animTime);
+          drawApexHalo(oCtx, viewW, viewH, apexOverlayAlpha, animTime, isZen || isCleanExport);
+
+          if (includeOrbit && orbitEnabled && (isHovering || isOrbitPinned)) {
+            if (!isOrbitPinned) {
+              const c = screenToComplex(hoverScreen.x, hoverScreen.y);
+              currentOrbit = traceOrbitAt(c.re, c.im);
+            } else {
+              currentOrbit = traceOrbitAt(pinnedComplex.re, pinnedComplex.im);
+            }
+            drawOrbit(oCtx, currentOrbit);
+            if (tick % 3 === 0) updateOrbitHud(currentOrbit);
+          }
+        }
+      }
+
+      function animate(now) {
+        const dt = Math.min(0.05, (now - lastT) / 1000);
+        lastT = now;
+        animTime += dt;
+
+        renderScene(dt, true, false);
+
+        tick++;
+        if (tick % 6 === 0) {
+          const logMag = infiniteZoomActive ? cumulativeLog10Mag : Math.log10(Math.max(1.0, currentCam.scale));
+          const magStr = standaloneFinalBox ? '4D Prism' : formatMag(logMag);
+          const sampStr = (totalSamples / 1_000_000).toFixed(2) + 'M';
+
+          document.getElementById('magReadout').textContent = magStr;
+          document.getElementById('magReadoutMobile').textContent = magStr;
+          document.getElementById('sampleReadout').textContent = sampStr;
+          document.getElementById('sampleReadoutMobile').textContent = (totalSamples / 1_000_000).toFixed(1) + 'M';
+          document.getElementById('modeReadout').textContent = standaloneFinalBox
+            ? 'THE FINAL BOX (Standalone)'
+            : `${PORTAL_NAMES[activePortal]} · ${activePattern.formula}`;
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      /* =====================================================================
+         11. CLEAN BORDERLESS PNG SNAPSHOT (ZERO WATERMARKS, ZERO LABELS)
+         ===================================================================== */
+      function saveCleanPngSnapshot() {
+        try {
+          // Render an ultra-clean frame with zero HUD, zero callouts, and zero watermarks
+          renderScene(0.0, false, true);
+
+          const snap = document.createElement('canvas');
+          snap.width = glCanvas.width;
+          snap.height = glCanvas.height;
+          const sCtx = snap.getContext('2d');
+
+          sCtx.fillStyle = '#030308';
+          sCtx.fillRect(0, 0, snap.width, snap.height);
+          if (webglReady) sCtx.drawImage(glCanvas, 0, 0);
+          sCtx.drawImage(overlayCanvas, 0, 0);
+
+          const link = document.createElement('a');
+          const tag = standaloneFinalBox ? 'the-final-box-4d' : `${activePattern.id}-${activePortal}`;
+          link.download = `godvers-${tag}.png`;
+          link.href = snap.toDataURL('image/png');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          showToast(standaloneFinalBox
+            ? 'Saved Clean PNG: THE FINAL BOX (Borderless)'
+            : `Saved Clean PNG: ${activePattern.name}`);
+        } catch (err) {
+          showToast('Snapshot export was blocked by browser permissions');
+        }
+      }
+
+      /* =====================================================================
+         12. UI BUILDERS, STANDALONE FINAL BOX MODE, DRAWERS & EVENTS
+         ===================================================================== */
+      function showToast(msg) {
+        const box = document.getElementById('toastBox');
+        document.getElementById('toastMsg').textContent = msg;
+        box.classList.add('show');
+        clearTimeout(showToast._timer);
+        showToast._timer = setTimeout(() => box.classList.remove('show'), 2300);
+      }
+
+      function setStandaloneFinalBox(enabled, announce = true) {
+        standaloneFinalBox = enabled;
+        const topBtn = document.getElementById('finalBoxModeBtn');
+        const bar = document.getElementById('finalBoxBar');
+        const ctrl4d = document.getElementById('controls4D');
+
+        topBtn.classList.toggle('active-gold', enabled);
+        bar.classList.toggle('visible', enabled);
+        overlayCanvas.classList.toggle('box-rotate', enabled);
+
+        if (enabled) {
+          ctrl4d.classList.remove('visible');
+          document.getElementById('orbitHud').style.opacity = '0';
+          if (announce) showToast('THE FINAL BOX — Standalone 4D Containment View (Drag to Rotate)');
+        } else {
+          ctrl4d.classList.toggle('visible', activePattern.id === 'holo4d');
+          if (announce) showToast(`Returned to ${PORTAL_NAMES[activePortal]}`);
+        }
+      }
+
+      function buildPatternStrip() {
+        const strip = document.getElementById('patternStrip');
+        strip.innerHTML = '';
+        PATTERNS.forEach((p, idx) => {
+          const btn = document.createElement('button');
+          btn.dataset.patternId = p.id;
+          btn.className = `pattern-pill ${p.id === activePattern.id ? 'active' : ''}`;
+          btn.innerHTML = `
+            <span class="pattern-pill-name">${idx + 1}. ${p.name}</span>
+            <span class="pattern-pill-meta">${p.formula} · ${p.realm}</span>
+          `;
+          btn.addEventListener('click', () => selectPattern(p.id, true));
+          strip.appendChild(btn);
+        });
+      }
+
+      function selectPattern(patternId, announce = false) {
+        const found = PATTERNS.find((p) => p.id === patternId);
+        if (!found) return;
+        activePattern = found;
+
+        document.querySelectorAll('#patternStrip .pattern-pill').forEach((el) => {
+          el.classList.toggle('active', el.dataset.patternId === patternId);
+        });
+
+        document.getElementById('controls4D').classList.toggle('visible', patternId === 'holo4d' && !standaloneFinalBox);
+
+        clearDensityBuffers();
+        turboFrames = 30;
+        manualCam.re = manualCam.targetRe = found.defaultCenter.re;
+        manualCam.im = manualCam.targetIm = found.defaultCenter.im;
+        manualCam.scale = manualCam.targetScale = 1.0;
+
+        sampleActivePattern(36);
+        rebuildBuddhabrotTexture();
+
+        if (announce) {
+          showToast(standaloneFinalBox
+            ? `Updated Inner Core: ${found.name} (${found.formula})`
+            : `${found.name} (${found.formula}) — ${found.realm}`);
+        }
+      }
+
+      function selectPortal(portalKey, announce = false) {
+        if (standaloneFinalBox) setStandaloneFinalBox(false, false);
+        activePortal = portalKey;
+        loopPhase = 0.0;
+        loopCycle = 1;
+        cumulativeLog10Mag = 0.0;
+        infiniteZoomActive = true;
+        syncZoomToggleUI();
+
+        document.querySelectorAll('#portalGroup .portal-btn').forEach((b) => {
+          b.classList.toggle('active', b.dataset.portal === portalKey);
+        });
+
+        if (announce) showToast(`Portal Active: ${PORTAL_NAMES[portalKey]}`);
+      }
+
+      // Build 6-Plane Cosmology Sidebar with Dedicated Highlighted "ULTIMATE BOUNDARY" Box for 03
+      function buildLayerSidebar() {
+        const list = document.getElementById('layerList');
+        list.innerHTML = '';
+
+        COSMOLOGY_LAYERS.forEach((layer) => {
+          const createNode = () => {
+            const btn = document.createElement('button');
+            btn.dataset.layerId = layer.id;
+            btn.className = `layer-node ${layer.id === activeLayerId ? 'active' : ''}`;
+            btn.innerHTML = `
+              <div class="layer-sigil" style="background:${layer.accentHex}22;border:1px solid ${layer.accentHex}70;color:${layer.accentHex};">
+                ${layer.sigil}
+              </div>
+              <div style="min-width:0;flex:1;">
+                <div class="layer-rank">${layer.rank}</div>
+                <div style="font-family:var(--font-display);font-size:12.5px;font-weight:700;margin-top:1px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                  ${layer.shortTitle}
+                </div>
+                <div class="layer-subtitle">${layer.shortSubtitle}</div>
+              </div>
+            `;
+            btn.addEventListener('click', () => {
+              selectLayer(layer.id, true);
+              if (window.innerWidth < 1024) closeLayersDrawer();
+            });
+            return btn;
+          };
+
+          if (layer.isFinalBox) {
+            // Dedicated Visually Separated & Highlighted Standalone Section for THE FINAL BOX
+            const boxWrap = document.createElement('div');
+            boxWrap.className = 'final-box-section';
+
+            const headerLabel = document.createElement('div');
+            headerLabel.className = 'final-box-section-label';
+            headerLabel.innerHTML = '<span>◆ ULTIMATE BOUNDARY</span><span>▣</span>';
+            boxWrap.appendChild(headerLabel);
+
+            boxWrap.appendChild(createNode());
+
+            const separateBtn = document.createElement('button');
+            separateBtn.className = 'inspect-fb-btn';
+            separateBtn.innerHTML = '<span>▣</span><span>Inspect Final Box Separately</span>';
+            separateBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              activeLayerId = 3;
+              updateLayerHighlights();
+              populateLoreInspector(layer);
+              setStandaloneFinalBox(true, true);
+              if (window.innerWidth < 1024) closeLayersDrawer();
+            });
+            boxWrap.appendChild(separateBtn);
+
+            list.appendChild(boxWrap);
+
+            // Subtle section divider before Remaining Buddhist-Fractal Planes
+            const divLabel = document.createElement('div');
+            divLabel.className = 'section-divider-label';
+            divLabel.textContent = 'Buddhist-Fractal Planes';
+            list.appendChild(divLabel);
+          } else {
+            list.appendChild(createNode());
+          }
+        });
+      }
+
+      function updateLayerHighlights() {
+        document.querySelectorAll('#layerList .layer-node').forEach((n) => {
+          n.classList.toggle('active', Number(n.dataset.layerId) === activeLayerId);
+        });
+      }
+
+      function populateLoreInspector(layer) {
+        document.getElementById('inspLayerNum').textContent = `${layer.rank} · ${layer.shortTitle}`;
+        document.getElementById('inspTitle').textContent = layer.title;
+        document.getElementById('inspSubtitle').textContent = layer.subtitle;
+
+        const phil = document.getElementById('inspPhilosophy');
+        phil.innerHTML = '';
+        layer.philosophy.forEach((item) => {
+          const span = document.createElement('span');
+          span.style.cssText = 'font-size:10.5px;padding:3px 9px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.11);color:#e2e8f0;';
+          span.textContent = item;
+          phil.appendChild(span);
+        });
+
+        document.getElementById('inspMathSym').textContent = layer.mathSymbol;
+        document.getElementById('inspMathDesc').textContent = layer.mathDesc;
+        document.getElementById('inspLore').textContent = layer.lore;
+
+        const det = document.getElementById('inspDetails');
+        det.innerHTML = '';
+        layer.details.forEach((d) => {
+          const card = document.createElement('div');
+          card.style.cssText = 'background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:8px 10px;display:flex;align-items:flex-start;gap:8px;';
+          card.innerHTML = `
+            <span style="width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0;background:${d.color};box-shadow:0 0 8px ${d.color};"></span>
+            <div>
+              <div style="font-size:11px;font-weight:700;color:#fff;">${d.label}</div>
+              <div style="font-size:11px;color:#cbd5e1;line-height:1.42;margin-top:2px;">${d.text}</div>
+            </div>
+          `;
+          det.appendChild(card);
+        });
+
+        // Show explicit "Inspect Final Box Separately" button in Lore Drawer for Plane 03
+        const fbSepBtn = document.getElementById('inspFinalBoxSeparateBtn');
+        fbSepBtn.style.display = layer.isFinalBox ? 'flex' : 'none';
+
+        document.getElementById('inspQuote').textContent = layer.quote;
+      }
+
+      function selectLayer(layerId, openLore = false) {
+        const layer = COSMOLOGY_LAYERS.find((l) => l.id === layerId);
+        if (!layer) return;
+        activeLayerId = layerId;
+        updateLayerHighlights();
+        populateLoreInspector(layer);
+
+        targetApexAlpha = layerId === 1 ? 0.94 : 0.14;
+        targetSunyataAlpha = layerId === 4 ? 0.92 : 0.0;
+
+        const autoSync = document.getElementById('autoSyncLayerCheck').checked;
+        if (autoSync) {
+          if (layer.isFinalBox) {
+            if (layer.signaturePalette) {
+              activePalette = layer.signaturePalette;
+              document.getElementById('paletteSelect').value = activePalette;
+              textureDirty = true;
+            }
+            setStandaloneFinalBox(true, true);
+          } else {
+            setStandaloneFinalBox(false, false);
+            if (layer.signaturePalette) {
+              activePalette = layer.signaturePalette;
+              document.getElementById('paletteSelect').value = activePalette;
+            }
+            selectPattern(layer.signaturePattern, false);
+            selectPortal(layer.signaturePortal, false);
+            showToast(`${layer.rank} · ${layer.shortTitle}`);
+          }
+        }
+
+        if (openLore) openLoreDrawer();
+      }
+
+      function syncZoomToggleUI() {
+        const btn = document.getElementById('zoomToggleBtn');
+        const icon = document.getElementById('zoomToggleIcon');
+        const label = document.getElementById('zoomToggleLabel');
+        const dot = document.getElementById('teleDot');
+
+        if (infiniteZoomActive) {
+          btn.className = 'btn-glass active-cyan';
+          icon.textContent = '❚❚';
+          label.textContent = 'Infinite Zoom';
+          dot.style.background = 'var(--cyan)';
+        } else {
+          btn.className = 'btn-glass';
+          icon.textContent = '▶';
+          label.textContent = 'Paused';
+          dot.style.background = 'var(--gold)';
+        }
+      }
+
+      function pauseForManualExploration() {
+        if (!infiniteZoomActive || standaloneFinalBox) return;
+        infiniteZoomActive = false;
+        manualCam.re = manualCam.targetRe = currentCam.re;
+        manualCam.im = manualCam.targetIm = currentCam.im;
+        manualCam.scale = manualCam.targetScale = Math.max(0.5, currentCam.scale);
+        syncZoomToggleUI();
+      }
+
+      function sync4DSlidersUI() {
+        const degXZ = Math.round(((thetaXZ * 180) / Math.PI) % 360);
+        const degYW = Math.round(((thetaYW * 180) / Math.PI) % 360);
+        document.getElementById('angleXZSlider').value = degXZ;
+        document.getElementById('angleYWSlider').value = degYW;
+        document.getElementById('angleXZVal').textContent = degXZ + '°';
+        document.getElementById('angleYWVal').textContent = degYW + '°';
+      }
+
+      // Drawers & Mobile Backdrop Dimmer
+      const layersSidebar = document.getElementById('layersSidebar');
+      const inspectorDrawer = document.getElementById('inspectorDrawer');
+      const drawerBackdrop = document.getElementById('drawerBackdrop');
+
+      function updateBackdrop() {
+        const anyOpen = layersSidebar.classList.contains('open') || inspectorDrawer.classList.contains('open');
+        drawerBackdrop.classList.toggle('show', anyOpen && window.innerWidth <= 768);
+      }
+      function openLayersDrawer() { layersSidebar.classList.add('open'); updateBackdrop(); }
+      function closeLayersDrawer() { layersSidebar.classList.remove('open'); updateBackdrop(); }
+      function openLoreDrawer() { inspectorDrawer.classList.add('open'); updateBackdrop(); }
+      function closeLoreDrawer() { inspectorDrawer.classList.remove('open'); updateBackdrop(); }
+
+      drawerBackdrop.addEventListener('click', () => {
+        closeLayersDrawer();
+        closeLoreDrawer();
+      });
+
+      /* =====================================================================
+         13. EVENT WIRING
+         ===================================================================== */
+      function handleResize() {
+        viewW = window.innerWidth;
+        viewH = window.innerHeight;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        glCanvas.width = Math.floor(viewW * dpr);
+        glCanvas.height = Math.floor(viewH * dpr);
+        overlayCanvas.width = Math.floor(viewW * dpr);
+        overlayCanvas.height = Math.floor(viewH * dpr);
+        oCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        updateBackdrop();
+      }
+
+      document.getElementById('toggleLayersBtn').addEventListener('click', () => {
+        if (layersSidebar.classList.contains('open')) closeLayersDrawer();
+        else {
+          openLayersDrawer();
+          if (window.innerWidth < 1024) closeLoreDrawer();
+        }
+      });
+      document.getElementById('closeLayersBtn').addEventListener('click', closeLayersDrawer);
+
+      document.getElementById('toggleLoreBtn').addEventListener('click', () => {
+        if (inspectorDrawer.classList.contains('open')) closeLoreDrawer();
+        else {
+          openLoreDrawer();
+          if (window.innerWidth < 1024) closeLayersDrawer();
+        }
+      });
+      document.getElementById('closeLoreBtn').addEventListener('click', closeLoreDrawer);
+
+      // Dedicated Top-Bar "▣ Final Box" Toggle
+      document.getElementById('finalBoxModeBtn').addEventListener('click', () => {
+        if (standaloneFinalBox) {
+          setStandaloneFinalBox(false, true);
+        } else {
+          activeLayerId = 3;
+          updateLayerHighlights();
+          populateLoreInspector(COSMOLOGY_LAYERS.find((l) => l.id === 3));
+          setStandaloneFinalBox(true, true);
+        }
+      });
+
+      // Lore Drawer Explicit "Inspect Final Box Separately" Button
+      document.getElementById('inspFinalBoxSeparateBtn').addEventListener('click', () => {
+        setStandaloneFinalBox(true, true);
+        if (window.innerWidth < 1024) closeLoreDrawer();
+      });
+
+      // Standalone Final Box Floating Bar Buttons
+      document.getElementById('fbLabelsToggleBtn').addEventListener('click', () => {
+        showFinalBoxLabels = !showFinalBoxLabels;
+        const btn = document.getElementById('fbLabelsToggleBtn');
+        btn.textContent = showFinalBoxLabels ? 'Labels: ON' : 'Labels: OFF';
+        btn.className = showFinalBoxLabels ? 'btn-glass active-gold' : 'btn-glass';
+        btn.style.cssText = 'padding:5px 10px;min-height:28px;font-size:10.5px;';
+      });
+
+      document.getElementById('fbAutoSpinBtn').addEventListener('click', () => {
+        finalBoxAutoSpin = !finalBoxAutoSpin;
+        const btn = document.getElementById('fbAutoSpinBtn');
+        btn.textContent = finalBoxAutoSpin ? '4D Spin: ON' : '4D Spin: OFF';
+        btn.className = finalBoxAutoSpin ? 'btn-glass active-cyan' : 'btn-glass';
+        btn.style.cssText = 'padding:5px 10px;min-height:28px;font-size:10.5px;';
+      });
+
+      document.getElementById('fbDiveInsideBtn').addEventListener('click', () => {
+        setStandaloneFinalBox(false, false);
+        selectPortal('finalbox', true);
+      });
+
+      document.getElementById('exitFinalBoxBtn').addEventListener('click', () => {
+        setStandaloneFinalBox(false, true);
+      });
+
+      // Engage Signature Realm from Lore Drawer
+      document.getElementById('engageLayerSignatureBtn').addEventListener('click', () => {
+        const layer = COSMOLOGY_LAYERS.find((l) => l.id === activeLayerId);
+        if (!layer) return;
+        setStandaloneFinalBox(false, false);
+        if (layer.signaturePalette) {
+          activePalette = layer.signaturePalette;
+          document.getElementById('paletteSelect').value = activePalette;
+        }
+        selectPattern(layer.signaturePattern, false);
+        selectPortal(layer.signaturePortal, false);
+        showToast(`Engaged ${layer.rank} · ${layer.shortTitle}`);
+        if (window.innerWidth <= 768) closeLoreDrawer();
+      });
+
+      // Optional Final Box Border Overlay Toggle
+      document.getElementById('frameOverlayBtn').addEventListener('click', () => {
+        finalBoxBorderOverlay = !finalBoxBorderOverlay;
+        const btn = document.getElementById('frameOverlayBtn');
+        btn.classList.toggle('active-gold', finalBoxBorderOverlay);
+        if (standaloneFinalBox && finalBoxBorderOverlay) {
+          setStandaloneFinalBox(false, false);
+        }
+        showToast(finalBoxBorderOverlay
+          ? 'Final Box Border Overlay ON — Framing Active Fractal'
+          : 'Final Box Border Overlay OFF');
+      });
+
+      document.getElementById('savePngBtn').addEventListener('click', saveCleanPngSnapshot);
+      document.getElementById('zenBtn').addEventListener('click', () => document.body.classList.add('zen-mode'));
+      document.getElementById('exitZenBtn').addEventListener('click', () => document.body.classList.remove('zen-mode'));
+
+      let zenWakeTimer = null;
+      function wakeZenExit() {
+        if (!document.body.classList.contains('zen-mode')) return;
+        const btn = document.getElementById('exitZenBtn');
+        btn.classList.add('zen-awake');
+        clearTimeout(zenWakeTimer);
+        zenWakeTimer = setTimeout(() => btn.classList.remove('zen-awake'), 2200);
+      }
+
+      // Zoom & Portal Controls
+      document.getElementById('zoomToggleBtn').addEventListener('click', () => {
+        if (standaloneFinalBox) {
+          setStandaloneFinalBox(false, false);
+          infiniteZoomActive = true;
+          syncZoomToggleUI();
+          showToast('Infinite Loop Zoom Active');
+          return;
+        }
+        if (infiniteZoomActive) {
+          pauseForManualExploration();
+          showToast('Paused — Drag to Pan, Scroll/Pinch to Zoom');
+        } else {
+          infiniteZoomActive = true;
+          syncZoomToggleUI();
+          showToast('Infinite Loop Zoom Resumed');
+        }
+      });
+
+      document.getElementById('dirToggleBtn').addEventListener('click', () => {
+        zoomDirection *= -1;
+        document.getElementById('dirIcon').textContent = zoomDirection > 0 ? '↓' : '↑';
+        document.getElementById('dirLabel').textContent = zoomDirection > 0 ? 'In' : 'Out';
+        showToast(zoomDirection > 0 ? 'Direction: Zoom In' : 'Direction: Zoom Out');
+      });
+
+      document.querySelectorAll('#portalGroup .portal-btn').forEach((btn) => {
+        btn.addEventListener('click', () => selectPortal(btn.dataset.portal, true));
+      });
+
+      document.getElementById('speedSlider').addEventListener('input', (e) => {
+        zoomSpeed = parseFloat(e.target.value);
+        document.getElementById('speedVal').textContent = zoomSpeed.toFixed(1) + '×';
+      });
+
+      document.getElementById('paletteSelect').addEventListener('change', (e) => {
+        activePalette = e.target.value;
+        textureDirty = true;
+        showToast(`Palette: ${e.target.options[e.target.selectedIndex].text}`);
+      });
+
+      document.getElementById('orbitToggleBtn').addEventListener('click', () => {
+        orbitEnabled = !orbitEnabled;
+        const btn = document.getElementById('orbitToggleBtn');
+        const led = document.getElementById('orbitLed');
+        if (orbitEnabled) {
+          btn.className = 'btn-glass active-cyan';
+          led.style.background = 'var(--cyan)';
+          showToast(`Orbit Tracer ON (${activePattern.formula})`);
+        } else {
+          btn.className = 'btn-glass';
+          led.style.background = '#64748b';
+          isOrbitPinned = false;
+          currentOrbit = null;
+          document.getElementById('orbitHud').style.opacity = '0';
+          showToast('Orbit Tracer OFF');
+        }
+      });
+
+      document.getElementById('turboBtn').addEventListener('click', () => {
+        turboFrames += 45;
+        showToast('Turbo Boost: Firing high-density Monte Carlo trajectories...');
+      });
+
+      document.getElementById('resetBtn').addEventListener('click', () => {
+        loopPhase = 0.0;
+        loopCycle = 1;
+        cumulativeLog10Mag = 0.0;
+        boxRot.yaw = 0.58; boxRot.pitch = 0.34;
+        boxRot.xw = 0.42; boxRot.yw = 0.25; boxRot.zw = 0.16;
+        boxRot.velYaw = 0; boxRot.velPitch = 0;
+        manualCam.re = manualCam.targetRe = activePattern.defaultCenter.re;
+        manualCam.im = manualCam.targetIm = activePattern.defaultCenter.im;
+        manualCam.scale = manualCam.targetScale = 1.0;
+        isOrbitPinned = false;
+        document.getElementById('orbitHud').style.opacity = '0';
+        showToast('View, 4D Orientation & Zoom Cycle Reset');
+      });
+
+      // 4D Holographic Pattern #3 Sliders
+      document.getElementById('autoMorph4DBtn').addEventListener('click', () => {
+        autoMorph4D = !autoMorph4D;
+        const btn = document.getElementById('autoMorph4DBtn');
+        btn.textContent = autoMorph4D ? 'Auto-Morph: ON' : 'Auto-Morph: OFF';
+        btn.className = autoMorph4D ? 'btn-glass active-cyan' : 'btn-glass';
+        btn.style.cssText = 'padding:4px 8px;min-height:26px;font-size:10px;';
+      });
+
+      document.getElementById('angleXZSlider').addEventListener('input', (e) => {
+        autoMorph4D = false;
+        const btn = document.getElementById('autoMorph4DBtn');
+        btn.textContent = 'Auto-Morph: OFF';
+        btn.className = 'btn-glass';
+        btn.style.cssText = 'padding:4px 8px;min-height:26px;font-size:10px;';
+        thetaXZ = (parseFloat(e.target.value) * Math.PI) / 180;
+        document.getElementById('angleXZVal').textContent = e.target.value + '°';
+      });
+
+      document.getElementById('angleYWSlider').addEventListener('input', (e) => {
+        autoMorph4D = false;
+        const btn = document.getElementById('autoMorph4DBtn');
+        btn.textContent = 'Auto-Morph: OFF';
+        btn.className = 'btn-glass';
+        btn.style.cssText = 'padding:4px 8px;min-height:26px;font-size:10px;';
+        thetaYW = (parseFloat(e.target.value) * Math.PI) / 180;
+        document.getElementById('angleYWVal').textContent = e.target.value + '°';
+      });
+
+      // Unified Pointer & Touch Handling:
+      // - In Standalone Final Box Mode: Drag rotates the 4D Tesseract smoothly!
+      // - In Fractal Mode: Drag pans (when paused), Pinch zooms, Click pins Orbit Tracer!
+      overlayCanvas.addEventListener('pointerdown', (e) => {
+        wakeZenExit();
+        overlayCanvas.setPointerCapture(e.pointerId);
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+        if (activePointers.size === 1) {
+          isPointerDown = true;
+          hasDragged = false;
+          dragStart = {
+            x: e.clientX, y: e.clientY,
+            lastX: e.clientX, lastY: e.clientY,
+            camRe: manualCam.targetRe, camIm: manualCam.targetIm
+          };
+          if (standaloneFinalBox || !infiniteZoomActive) overlayCanvas.classList.add('panning');
+        } else if (activePointers.size === 2 && !standaloneFinalBox) {
+          const pts = Array.from(activePointers.values());
+          lastPinchDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+          pauseForManualExploration();
+        }
+      });
+
+      overlayCanvas.addEventListener('pointermove', (e) => {
+        wakeZenExit();
+        isHovering = true;
+        hoverScreen.x = e.clientX;
+        hoverScreen.y = e.clientY;
+        if (activePointers.has(e.pointerId)) activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+        if (standaloneFinalBox) {
+          if (isPointerDown) {
+            const dx = e.clientX - dragStart.lastX;
+            const dy = e.clientY - dragStart.lastY;
+            if (Math.hypot(e.clientX - dragStart.x, e.clientY - dragStart.y) > 3) hasDragged = true;
+            boxRot.yaw += dx * 0.008;
+            boxRot.pitch = Math.max(-1.35, Math.min(1.35, boxRot.pitch + dy * 0.008));
+            boxRot.xw += dx * 0.004;
+            boxRot.yw += dy * 0.004;
+            boxRot.velYaw = dx * 0.004;
+            boxRot.velPitch = dy * 0.004;
+            dragStart.lastX = e.clientX;
+            dragStart.lastY = e.clientY;
+          }
+          return;
+        }
+
+        if (activePointers.size === 2) {
+          const pts = Array.from(activePointers.values());
+          const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+          if (lastPinchDist > 5) {
+            manualCam.targetScale = Math.max(0.35, Math.min(25000, manualCam.targetScale * (dist / lastPinchDist)));
+          }
+          lastPinchDist = dist;
+          hasDragged = true;
+          return;
+        }
+
+        if (isPointerDown && !infiniteZoomActive) {
+          const dx = e.clientX - dragStart.x;
+          const dy = e.clientY - dragStart.y;
+          if (Math.hypot(dx, dy) > 5) {
+            hasDragged = true;
+            const minDim = Math.min(viewW, viewH);
+            const unitsPerPx = (3.1 / minDim) / manualCam.targetScale;
+            manualCam.targetIm = dragStart.camIm - dx * unitsPerPx;
+            manualCam.targetRe = dragStart.camRe - dy * unitsPerPx;
+          }
+        }
+      });
+
+      overlayCanvas.addEventListener('pointerup', (e) => {
+        activePointers.delete(e.pointerId);
+        overlayCanvas.classList.remove('panning');
+
+        if (!standaloneFinalBox && !hasDragged && orbitEnabled && activePointers.size === 0) {
+          const c = screenToComplex(e.clientX, e.clientY);
+          if (e.pointerType === 'mouse' && isOrbitPinned) {
+            isOrbitPinned = false;
+          } else {
+            isOrbitPinned = true;
+            pinnedComplex = c;
+            currentOrbit = traceOrbitAt(c.re, c.im);
+            updateOrbitHud(currentOrbit);
+          }
+        }
+        if (activePointers.size === 0) {
+          isPointerDown = false;
+          lastPinchDist = 0;
+        }
+      });
+
+      overlayCanvas.addEventListener('pointercancel', (e) => {
+        activePointers.delete(e.pointerId);
+        isPointerDown = false;
+        overlayCanvas.classList.remove('panning');
+      });
+
+      overlayCanvas.addEventListener('pointerleave', () => {
+        isHovering = false;
+        if (!isOrbitPinned) document.getElementById('orbitHud').style.opacity = '0';
+      });
+
+      overlayCanvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        if (standaloneFinalBox) {
+          boxRot.xw += e.deltaY * 0.0022;
+          boxRot.zw += e.deltaY * 0.0014;
+          return;
+        }
+        if (infiniteZoomActive) {
+          pauseForManualExploration();
+          showToast('Manual Exploration Active — Press Space to resume Infinite Zoom');
+        }
+        const before = screenToComplex(e.clientX, e.clientY);
+        const factor = e.deltaY < 0 ? 1.24 : 1 / 1.24;
+        const nextScale = Math.max(0.35, Math.min(25000, manualCam.targetScale * factor));
+        const ratio = manualCam.targetScale / nextScale;
+        manualCam.targetRe = before.re + (manualCam.targetRe - before.re) * ratio;
+        manualCam.targetIm = before.im + (manualCam.targetIm - before.im) * ratio;
+        manualCam.targetScale = nextScale;
+      }, { passive: false });
+
+      // Keyboard Shortcuts: F (Final Box), Space (Zoom Play/Pause), Z (Zen), Esc, 1-9 (Patterns)
+      window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+        const k = e.key.toLowerCase();
+        if (k === 'z') {
+          document.body.classList.toggle('zen-mode');
+        } else if (k === 'f') {
+          setStandaloneFinalBox(!standaloneFinalBox, true);
+        } else if (e.key === 'Escape') {
+          if (document.body.classList.contains('zen-mode')) document.body.classList.remove('zen-mode');
+          else if (isOrbitPinned) { isOrbitPinned = false; document.getElementById('orbitHud').style.opacity = '0'; }
+          else { closeLayersDrawer(); closeLoreDrawer(); }
+        } else if (e.key === ' ') {
+          e.preventDefault();
+          document.getElementById('zoomToggleBtn').click();
+        } else if (/^[1-9]$/.test(e.key)) {
+          const idx = Number(e.key) - 1;
+          if (PATTERNS[idx]) selectPattern(PATTERNS[idx].id, true);
+        }
+      });
+
+      window.addEventListener('resize', handleResize);
+
+      /* =====================================================================
+         14. BOOTSTRAP INITIALIZATION
+         ===================================================================== */
+      window.onload = function () {
+        try {
+          initParticles();
+          handleResize();
+          initWebGL();
+
+          buildPatternStrip();
+          buildLayerSidebar();
+          populateLoreInspector(COSMOLOGY_LAYERS.find((l) => l.id === 3));
+          sync4DSlidersUI();
+          syncZoomToggleUI();
+
+          // Warm-up Monte Carlo burst so the upright Buddhabrot glows on Frame 1
+          sampleActivePattern(55);
+          rebuildBuddhabrotTexture();
+
+          // Launch directly into the Dedicated Standalone THE FINAL BOX Showcase
+          // so the user immediately sees the 4D hypercube containment architecture & live core
+          setStandaloneFinalBox(true, false);
+
+          lastT = performance.now();
+          requestAnimationFrame(animate);
+        } catch (err) {
+          console.error('GODVERS initialization error:', err);
+        }
+      };
+    })();
+  </script>
+</body>
+</html>
